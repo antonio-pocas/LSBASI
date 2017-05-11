@@ -12,8 +12,8 @@ namespace LSBASI2
         {
             var x = Console.ReadLine();
 
-            var lexer = new Part5.Lexer(x);
-            var parser = new Part5.Parser(lexer);
+            var lexer = new Part6.Lexer(x);
+            var parser = new Part6.Parser(lexer);
             //var interpreter = new Part3.Interpreter(parser);
             var y = parser.expr();
 
@@ -51,6 +51,8 @@ namespace LSBASI2
         Subtract,
         Divide,
         Multiply,
+        LeftParen,
+        RightParen,
         EOF
     }
 }
