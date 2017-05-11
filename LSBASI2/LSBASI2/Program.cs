@@ -124,6 +124,7 @@ namespace LSBASI2
                     {
                         expression.Enqueue(currentToken);
                         Eat(TokenType.Integer);
+                        continue;
                     }
                 }
                 else if (currentToken.Type == TokenType.Add)
@@ -132,6 +133,7 @@ namespace LSBASI2
                     {
                         expression.Enqueue(currentToken);
                         Eat(TokenType.Add);
+                        continue;
                     }
                 }
                 else if (currentToken.Type == TokenType.Subtract)
@@ -140,12 +142,11 @@ namespace LSBASI2
                     {
                         expression.Enqueue(currentToken);
                         Eat(TokenType.Subtract);
+                        continue;
                     }
                 }
-                else
-                {
-                    throw new InvalidOperationException("Parser error");
-                }
+
+                throw new InvalidOperationException("Parser error");
             }
             expression.Enqueue(currentToken);
             return expression;
