@@ -12,8 +12,8 @@ namespace LSBASI2
         {
             var x = Console.ReadLine();
 
-            var lexer = new Part4.Lexer(x);
-            var parser = new Part4.Parser(lexer);
+            var lexer = new Part5.Lexer(x);
+            var parser = new Part5.Parser(lexer);
             //var interpreter = new Part3.Interpreter(parser);
             var y = parser.expr();
 
