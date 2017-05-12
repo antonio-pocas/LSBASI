@@ -12,8 +12,8 @@ namespace LSBASI2
         {
             var x = Console.ReadLine();
 
-            var lexer = new Part6.Lexer(x);
-            var parser = new Part6.Parser(lexer);
+            var lexer = new Part6Exercise.Lexer(x);
+            var parser = new Part6Exercise.Parser(lexer);
             //var interpreter = new Part3.Interpreter(parser);
             var y = parser.expr();
 
@@ -22,7 +22,7 @@ namespace LSBASI2
         }
     }
 
-    internal class Token
+    public class Token
     {
         public TokenType Type { get; set; }
         public string Value { get; set; }
@@ -44,7 +44,7 @@ namespace LSBASI2
         }
     }
 
-    internal enum TokenType
+    public enum TokenType
     {
         Integer,
         Add,
