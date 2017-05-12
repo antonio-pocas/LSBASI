@@ -12,8 +12,8 @@ namespace LSBASI2
         {
             var x = Console.ReadLine();
 
-            var lexer = new Part6Exercise.Lexer(x);
-            var parser = new Part6Exercise.Parser(lexer);
+            var lexer = new Part7.Lexer("(((2*3))) + 4 + 10 * 100 - (2 * 20)");
+            var parser = new Part7.Parser(lexer);
             //var interpreter = new Part3.Interpreter(parser);
             var y = parser.expr();
 

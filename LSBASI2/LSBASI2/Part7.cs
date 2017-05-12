@@ -1,0 +1,295 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace LSBASI2.Part7
+{
+    public class Lexer
+    {
+        private string currentChar => position < input.Length ? input[position].ToString() : null;
+        private readonly string input;
+        private int position;
+
+        public Lexer(string input)
+        {
+            this.input = input;
+        }
+
+        public Token GetNextToken()
+        {
+            SkipWhitespace();
+
+            if (currentChar != null)
+            {
+                int tempValue;
+                if (int.TryParse(currentChar, out tempValue))
+                {
+                    return Integer();
+                }
+
+                if (currentChar == "/")
+                {
+                    position++;
+                    return new Token(TokenType.Divide, string.Empty);
+                }
+
+                if (currentChar == "*")
+                {
+                    position++;
+                    return new Token(TokenType.Multiply, string.Empty);
+                }
+
+                if (currentChar == "+")
+                {
+                    position++;
+                    return new Token(TokenType.Add, string.Empty);
+                }
+
+                if (currentChar == "-")
+                {
+                    position++;
+                    return new Token(TokenType.Subtract, string.Empty);
+                }
+
+                if (currentChar == "(")
+                {
+                    position++;
+                    return new Token(TokenType.LeftParen, string.Empty);
+                }
+
+                if (currentChar == ")")
+                {
+                    position++;
+                    return new Token(TokenType.RightParen, string.Empty);
+                }
+
+                throw new InvalidOperationException("Lexer error");
+            }
+
+            return Token.CreateEOFToken();
+        }
+
+        private Token Integer()
+        {
+            var sb = new StringBuilder();
+            int tempValue;
+            do
+            {
+                sb.Append(currentChar);
+                position++;
+            } while (int.TryParse(currentChar, out tempValue));
+
+            return new Token(TokenType.Integer, sb.ToString());
+        }
+
+        private void SkipWhitespace()
+        {
+            while (currentChar == " ")
+            {
+                position++;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Grammar:
+    /// expr:      term ((ADD|SUB) term)*
+    /// term:      factor ((MUL|DIV) factor)*
+    /// factor:    INTEGER | LPAREN expr RPAREN
+    /// </summary>
+    public class Parser
+    {
+        private Token currentToken;
+        private readonly Lexer lexer;
+
+        private readonly HashSet<TokenType> termOperationTokens = new HashSet<TokenType>() { TokenType.Multiply, TokenType.Divide };
+        private readonly HashSet<TokenType> exprOperationTokens = new HashSet<TokenType>() { TokenType.Add, TokenType.Subtract };
+
+        public Parser(Lexer lexer)
+        {
+            this.lexer = lexer;
+            currentToken = lexer.GetNextToken();
+        }
+
+        private void Eat(TokenType type)
+        {
+            if (currentToken.Type == type)
+            {
+                currentToken = lexer.GetNextToken();
+            }
+            else
+            {
+                throw new InvalidOperationException("Parser error");
+            }
+        }
+
+        public AstNode expr()
+        {
+            var result = term();
+            while (exprOperationTokens.Contains(currentToken.Type))
+            {
+                if (currentToken.Type == TokenType.Add)
+                {
+                    var token = currentToken;
+                    Eat(TokenType.Add);
+                    result = new BinaryOperationNode(token, result, term());
+                }
+                else if (currentToken.Type == TokenType.Subtract)
+                {
+                    var token = currentToken;
+                    Eat(TokenType.Subtract);
+                    result = new BinaryOperationNode(token, result, term());
+                }
+            }
+
+            return result;
+        }
+
+        public AstNode term()
+        {
+            var result = factor();
+            while (termOperationTokens.Contains(currentToken.Type))
+            {
+                if (currentToken.Type == TokenType.Multiply)
+                {
+                    var token = currentToken;
+                    Eat(TokenType.Multiply);
+                    result = new BinaryOperationNode(token, result, factor());
+                }
+                else if (currentToken.Type == TokenType.Divide)
+                {
+                    var token = currentToken;
+                    Eat(TokenType.Divide);
+                    result = new BinaryOperationNode(token, result, factor());
+                }
+            }
+
+            return result;
+        }
+
+        private AstNode factor()
+        {
+            if (currentToken.Type == TokenType.Integer)
+            {
+                var value = new NumberNode(currentToken);
+                Eat(TokenType.Integer);
+                return value;
+            }
+
+            Eat(TokenType.LeftParen);
+            var ret = expr();
+            Eat(TokenType.RightParen);
+            return ret;
+        }
+    }
+
+    public class Interpreter : IVisitor
+    {
+        private Parser parser;
+        private AstNode rootNode;
+
+        public Interpreter(Parser parser)
+        {
+            this.parser = parser;
+            this.rootNode = parser.expr();
+        }
+
+        public void Visit(BinaryOperationNode binaryOperationNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(NumberNode numberNode)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}
+
+namespace LSBASI2
+{
+    public abstract class AstNode : IVisitable
+    {
+        public Token token;
+
+        public AstNode(Token token)
+        {
+            this.token = token;
+        }
+
+        public abstract void Accept(IVisitor visitor);
+    }
+
+    public class BinaryOperationNode : AstNode
+    {
+        public AstNode Left { get; set; }
+        public AstNode Right { get; set; }
+        public OperationType Type { get; set; }
+
+        public BinaryOperationNode(Token token, AstNode left, AstNode right) : base(token)
+        {
+            this.Left = left;
+            this.Right = right;
+            switch (token.Type)
+            {
+                case TokenType.Add:
+                    this.Type = OperationType.Add;
+                    break;
+
+                case TokenType.Subtract:
+                    this.Type = OperationType.Subtract;
+                    break;
+
+                case TokenType.Divide:
+                    this.Type = OperationType.Divide;
+                    break;
+
+                case TokenType.Multiply:
+                    this.Type = OperationType.Multiply;
+                    break;
+            }
+        }
+
+        public override void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+    }
+
+    public class NumberNode : AstNode
+    {
+        public int Value { get; set; }
+
+        public NumberNode(Token token) : base(token)
+        {
+            this.Value = int.Parse(token.Value);
+        }
+
+        public override void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+    }
+
+    public enum OperationType
+    {
+        Add,
+        Subtract,
+        Multiply,
+        Divide
+    }
+
+    public interface IVisitable
+    {
+        void Accept(IVisitor visitor);
+    }
+
+    public interface IVisitor
+    {
+        void Visit(NumberNode numberNode);
+
+        void Visit(BinaryOperationNode binaryOperationNode);
+    }
+}
