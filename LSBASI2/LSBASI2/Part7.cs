@@ -196,14 +196,34 @@ namespace LSBASI2.Part7
             this.rootNode = parser.expr();
         }
 
-        public void Visit(BinaryOperationNode binaryOperationNode)
+        public int Evaluate()
         {
-            throw new NotImplementedException();
+            return this.rootNode.Accept(this);
         }
 
-        public void Visit(NumberNode numberNode)
+        int IVisitor.Visit(BinaryOperationNode node)
         {
-            throw new NotImplementedException();
+            switch (node.Type)
+            {
+                case OperationType.Add:
+                    return node.Left.Accept(this) + node.Right.Accept(this);
+
+                case OperationType.Subtract:
+                    return node.Left.Accept(this) - node.Right.Accept(this);
+
+                case OperationType.Multiply:
+                    return node.Left.Accept(this) * node.Right.Accept(this);
+
+                case OperationType.Divide:
+                    return node.Left.Accept(this) / node.Right.Accept(this);
+            }
+
+            throw new Exception();
+        }
+
+        int IVisitor.Visit(NumberNode node)
+        {
+            return node.Value;
         }
     }
 }
@@ -219,7 +239,7 @@ namespace LSBASI2
             this.token = token;
         }
 
-        public abstract void Accept(IVisitor visitor);
+        public abstract int Accept(IVisitor visitor);
     }
 
     public class BinaryOperationNode : AstNode
@@ -252,9 +272,9 @@ namespace LSBASI2
             }
         }
 
-        public override void Accept(IVisitor visitor)
+        public override int Accept(IVisitor visitor)
         {
-            visitor.Visit(this);
+            return visitor.Visit(this);
         }
     }
 
@@ -267,9 +287,9 @@ namespace LSBASI2
             this.Value = int.Parse(token.Value);
         }
 
-        public override void Accept(IVisitor visitor)
+        public override int Accept(IVisitor visitor)
         {
-            visitor.Visit(this);
+            return visitor.Visit(this);
         }
     }
 
@@ -283,13 +303,13 @@ namespace LSBASI2
 
     public interface IVisitable
     {
-        void Accept(IVisitor visitor);
+        int Accept(IVisitor visitor);
     }
 
     public interface IVisitor
     {
-        void Visit(NumberNode numberNode);
+        int Visit(NumberNode numberNode);
 
-        void Visit(BinaryOperationNode binaryOperationNode);
+        int Visit(BinaryOperationNode binaryOperationNode);
     }
 }

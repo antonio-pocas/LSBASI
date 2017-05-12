@@ -22,14 +22,15 @@ namespace UnitTests
         private void TestExpression(string expression, int expected)
         {
             var target = GetTarget(expression);
-            var result = target.expr();
-            Assert.AreEqual(expected, result.Evaluate());
+            var result = target.Evaluate();
+            Assert.AreEqual(expected, result);
         }
 
-        private Parser GetTarget(string input)
+        private Interpreter GetTarget(string input)
         {
             var lexer = new Lexer(input);
-            return new Parser(lexer);
+            var parser = new Parser(lexer);
+            return new Interpreter(parser);
         }
     }
 }
