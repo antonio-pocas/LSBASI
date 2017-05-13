@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LSBASI2.Part7Exercises;
 
 namespace LSBASI2.Part7
 {
@@ -147,7 +148,7 @@ namespace LSBASI2.Part7
             return result;
         }
 
-        public AstNode term()
+        private AstNode term()
         {
             var result = factor();
             while (termOperationTokens.Contains(currentToken.Type))
@@ -185,10 +186,10 @@ namespace LSBASI2.Part7
         }
     }
 
-    public class Interpreter : IVisitor
+    public class Interpreter : IVisitor<int>
     {
         private Parser parser;
-        private AstNode rootNode;
+        private readonly AstNode rootNode;
 
         public Interpreter(Parser parser)
         {
@@ -201,7 +202,7 @@ namespace LSBASI2.Part7
             return this.rootNode.Accept(this);
         }
 
-        int IVisitor.Visit(BinaryOperationNode node)
+        int IVisitor<int>.Visit(BinaryOperationNode node)
         {
             switch (node.Type)
             {
@@ -221,7 +222,7 @@ namespace LSBASI2.Part7
             throw new Exception();
         }
 
-        int IVisitor.Visit(NumberNode node)
+        int IVisitor<int>.Visit(NumberNode node)
         {
             return node.Value;
         }
@@ -230,7 +231,7 @@ namespace LSBASI2.Part7
 
 namespace LSBASI2
 {
-    public abstract class AstNode : IVisitable
+    public abstract class AstNode
     {
         public Token token;
 
@@ -239,7 +240,7 @@ namespace LSBASI2
             this.token = token;
         }
 
-        public abstract int Accept(IVisitor visitor);
+        public abstract T Accept<T>(IVisitor<T> visitor);
     }
 
     public class BinaryOperationNode : AstNode
@@ -272,7 +273,7 @@ namespace LSBASI2
             }
         }
 
-        public override int Accept(IVisitor visitor)
+        public override T Accept<T>(IVisitor<T> visitor)
         {
             return visitor.Visit(this);
         }
@@ -287,7 +288,7 @@ namespace LSBASI2
             this.Value = int.Parse(token.Value);
         }
 
-        public override int Accept(IVisitor visitor)
+        public override T Accept<T>(IVisitor<T> visitor)
         {
             return visitor.Visit(this);
         }
@@ -301,15 +302,10 @@ namespace LSBASI2
         Divide
     }
 
-    public interface IVisitable
+    public interface IVisitor<T>
     {
-        int Accept(IVisitor visitor);
-    }
+        T Visit(NumberNode numberNode);
 
-    public interface IVisitor
-    {
-        int Visit(NumberNode numberNode);
-
-        int Visit(BinaryOperationNode binaryOperationNode);
+        T Visit(BinaryOperationNode binaryOperationNode);
     }
 }

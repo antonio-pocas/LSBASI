@@ -8,7 +8,7 @@ namespace UnitTests
     public class Part6ExerciseTests
     {
         [TestMethod]
-        public void TestValidExpressions()
+        public void Part6_Exercise_TestValidExpressions()
         {
             TestExpression("(((2*3))) + 4 + 10 * 100 - (2 * 20)", 970);
             TestExpression("1 + 1 + 1 + 1 + 2 * 2 + 4 * (5-2) / 2", 14);
