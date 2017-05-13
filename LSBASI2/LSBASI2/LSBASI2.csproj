@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common.cs" />
     <Compile Include="Part3.cs" />
     <Compile Include="Part4.cs" />
     <Compile Include="Part5.cs" />
@@ -50,6 +51,7 @@
     <Compile Include="Part6Exercise.cs" />
     <Compile Include="Part7.cs" />
     <Compile Include="Part7Exercises.cs" />
+    <Compile Include="Part8.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

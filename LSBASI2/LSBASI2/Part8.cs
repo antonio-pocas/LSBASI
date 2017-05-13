@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using LSBASI2.Part7Exercises;
 
-namespace LSBASI2.Part7
+namespace LSBASI2.Part8
 {
     public class Lexer
     {
@@ -98,7 +97,7 @@ namespace LSBASI2.Part7
     /// Grammar:
     /// expr:      term ((ADD|SUB) term)*
     /// term:      factor ((MUL|DIV) factor)*
-    /// factor:    INTEGER | LPAREN expr RPAREN
+    /// factor:    (+|-)factor | INTEGER | LPAREN expr RPAREN
     /// </summary>
     public class Parser
     {
@@ -107,6 +106,7 @@ namespace LSBASI2.Part7
 
         private readonly HashSet<TokenType> termOperationTokens = new HashSet<TokenType>() { TokenType.Multiply, TokenType.Divide };
         private readonly HashSet<TokenType> exprOperationTokens = new HashSet<TokenType>() { TokenType.Add, TokenType.Subtract };
+        private readonly HashSet<TokenType> factorOperationTokens = new HashSet<TokenType>() { TokenType.Add, TokenType.Subtract };
 
         public Parser(Lexer lexer)
         {
@@ -172,6 +172,12 @@ namespace LSBASI2.Part7
 
         private AstNode factor()
         {
+            if (factorOperationTokens.Contains(currentToken.Type))
+            {
+                var token = currentToken;
+                Eat(currentToken.Type);
+                return new UnaryOperationNode(token, factor());
+            }
             if (currentToken.Type == TokenType.Integer)
             {
                 var value = new NumberNode(currentToken);
@@ -202,9 +208,18 @@ namespace LSBASI2.Part7
             return this.rootNode.Accept(this);
         }
 
-        public int Visit(UnaryOperationNode binaryOperationNode)
+        public int Visit(UnaryOperationNode node)
         {
-            throw new NotImplementedException();
+            switch (node.Type)
+            {
+                case UnaryOperationType.Plus:
+                    return +node.Child.Accept(this);
+
+                case UnaryOperationType.Minus:
+                    return -node.Child.Accept(this);
+            }
+
+            throw new Exception();
         }
 
         int IVisitor<int>.Visit(BinaryOperationNode node)

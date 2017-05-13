@@ -20,25 +20,30 @@ namespace LSBASI2.Part7Exercises
             return this.rootNode.Accept(this);
         }
 
+        public string Visit(UnaryOperationNode binaryOperationNode)
+        {
+            throw new NotImplementedException();
+        }
+
         string IVisitor<string>.Visit(BinaryOperationNode node)
         {
             return $"{node.Left.Accept(this)} {node.Right.Accept(this)} {OperationToString(node.Type)}";
         }
 
-        private static string OperationToString(OperationType type)
+        private static string OperationToString(BinaryOperationType type)
         {
             switch (type)
             {
-                case OperationType.Add:
+                case BinaryOperationType.Add:
                     return "+";
 
-                case OperationType.Subtract:
+                case BinaryOperationType.Subtract:
                     return "-";
 
-                case OperationType.Multiply:
+                case BinaryOperationType.Multiply:
                     return "*";
 
-                case OperationType.Divide:
+                case BinaryOperationType.Divide:
                     return "/";
             }
             throw new Exception();
@@ -64,25 +69,30 @@ namespace LSBASI2.Part7Exercises
             return this.rootNode.Accept(this);
         }
 
+        public string Visit(UnaryOperationNode binaryOperationNode)
+        {
+            throw new NotImplementedException();
+        }
+
         string IVisitor<string>.Visit(BinaryOperationNode node)
         {
             return $"({OperationToString(node.Type)} {node.Left.Accept(this)} {node.Right.Accept(this)})";
         }
 
-        private static string OperationToString(OperationType type)
+        private static string OperationToString(BinaryOperationType type)
         {
             switch (type)
             {
-                case OperationType.Add:
+                case BinaryOperationType.Add:
                     return "+";
 
-                case OperationType.Subtract:
+                case BinaryOperationType.Subtract:
                     return "-";
 
-                case OperationType.Multiply:
+                case BinaryOperationType.Multiply:
                     return "*";
 
-                case OperationType.Divide:
+                case BinaryOperationType.Divide:
                     return "/";
             }
             throw new Exception();

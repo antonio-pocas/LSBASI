@@ -55,6 +55,7 @@
     <Compile Include="Part6ExerciseTests.cs" />
     <Compile Include="Part7Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Part8Tests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LSBASI2\LSBASI2.csproj">

@@ -12,47 +12,13 @@ namespace LSBASI2
         {
             var x = Console.ReadLine();
 
-            var lexer = new Part7.Lexer("(((2*3))) + 4 + 10 * 100 - (2 * 20)");
-            var parser = new Part7.Parser(lexer);
-            //var interpreter = new Part3.Interpreter(parser);
-            var y = parser.expr();
+            var lexer = new Part8.Lexer(x);
+            var parser = new Part8.Parser(lexer);
+            var interpreter = new Part8.Interpreter(parser);
+            var y = interpreter.Evaluate();
 
             Console.WriteLine(y);
             Console.ReadLine();
         }
-    }
-
-    public class Token
-    {
-        public TokenType Type { get; set; }
-        public string Value { get; set; }
-
-        public Token(TokenType tokenType, string value)
-        {
-            Type = tokenType;
-            Value = value;
-        }
-
-        public override string ToString()
-        {
-            return $"Token({Type.ToString()}, {Value})";
-        }
-
-        public static Token CreateEOFToken()
-        {
-            return new Token(TokenType.EOF, string.Empty);
-        }
-    }
-
-    public enum TokenType
-    {
-        Integer,
-        Add,
-        Subtract,
-        Divide,
-        Multiply,
-        LeftParen,
-        RightParen,
-        EOF
     }
 }
