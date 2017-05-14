@@ -68,7 +68,7 @@ namespace LSBASI2.Part8
                 throw new InvalidOperationException("Lexer error");
             }
 
-            return Token.CreateEOFToken();
+            return Token.EOF();
         }
 
         private Token Integer()

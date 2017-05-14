@@ -52,6 +52,7 @@
     <Compile Include="Part7.cs" />
     <Compile Include="Part7Exercises.cs" />
     <Compile Include="Part8.cs" />
+    <Compile Include="Part9.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

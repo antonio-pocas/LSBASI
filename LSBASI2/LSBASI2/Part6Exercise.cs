@@ -68,7 +68,7 @@ namespace LSBASI2.Part6Exercise
                 throw new InvalidOperationException("Lexer error");
             }
 
-            return Token.CreateEOFToken();
+            return Token.EOF();
         }
 
         private Token Integer()

@@ -22,9 +22,74 @@ namespace LSBASI2
             return $"Token({Type.ToString()}, {Value})";
         }
 
-        public static Token CreateEOFToken()
+        public static Token EOF()
         {
             return new Token(TokenType.EOF, string.Empty);
+        }
+
+        public static Token Assign()
+        {
+            return new Token(TokenType.Assign, ":=");
+        }
+
+        public static Token Add()
+        {
+            return new Token(TokenType.Add, "+");
+        }
+
+        public static Token Subtract()
+        {
+            return new Token(TokenType.Subtract, "-");
+        }
+
+        public static Token Divide()
+        {
+            return new Token(TokenType.Divide, "/");
+        }
+
+        public static Token Multiply()
+        {
+            return new Token(TokenType.Multiply, "*");
+        }
+
+        public static Token LeftParen()
+        {
+            return new Token(TokenType.LeftParen, "(");
+        }
+
+        public static Token RightParen()
+        {
+            return new Token(TokenType.RightParen, ")");
+        }
+
+        public static Token Begin()
+        {
+            return new Token(TokenType.Begin, "BEGIN");
+        }
+
+        public static Token End()
+        {
+            return new Token(TokenType.End, "END");
+        }
+
+        public static Token Semicolon()
+        {
+            return new Token(TokenType.Semicolon, ";");
+        }
+
+        public static Token Dot()
+        {
+            return new Token(TokenType.Dot, ".");
+        }
+
+        public static Token Id(string value)
+        {
+            return new Token(TokenType.Id, value);
+        }
+
+        public static Token Integer(string value)
+        {
+            return new Token(TokenType.Integer, value);
         }
     }
 
@@ -37,6 +102,12 @@ namespace LSBASI2
         Multiply,
         LeftParen,
         RightParen,
+        Begin,
+        End,
+        Semicolon,
+        Dot,
+        Assign,
+        Id,
         EOF
     }
 
@@ -51,6 +122,32 @@ namespace LSBASI2
 
         public abstract T Accept<T>(IVisitor<T> visitor);
     }
+
+    //public class StatementNode : AstNode
+    //{
+    //    public AstNode Child { get; set; }
+    //    public UnaryOperationType Type { get; set; }
+
+    //    public StatementNode(Token token, AstNode child) : base(token)
+    //    {
+    //        this.Child = child;
+    //        switch (token.Type)
+    //        {
+    //            case TokenType.Add:
+    //                this.Type = UnaryOperationType.Plus;
+    //                break;
+
+    //            case TokenType.Subtract:
+    //                this.Type = UnaryOperationType.Minus;
+    //                break;
+    //        }
+    //    }
+
+    //    public override T Accept<T>(IVisitor<T> visitor)
+    //    {
+    //        return visitor.Visit(this);
+    //    }
+    //}
 
     public class BinaryOperationNode : AstNode
     {
