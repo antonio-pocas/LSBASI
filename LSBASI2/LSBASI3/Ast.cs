@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -30,7 +31,7 @@ namespace LSBASI3
         {
         }
 
-        public abstract void Accept<T>(IVisitor<T> visitor);
+        public abstract void Accept(IVisitor visitor);
     }
 
     public abstract class ExpressionNode : AstNode
@@ -43,7 +44,7 @@ namespace LSBASI3
         {
         }
 
-        public abstract T Accept<T>(IVisitor<T> visitor);
+        public abstract T Accept<T>(IVisitor visitor);
     }
 
     public class ProgramNode : StatementNode
@@ -57,7 +58,7 @@ namespace LSBASI3
             Block = block;
         }
 
-        public override void Accept<T>(IVisitor<T> visitor)
+        public override void Accept(IVisitor visitor)
         {
             visitor.Visit(this);
         }
@@ -74,7 +75,7 @@ namespace LSBASI3
             Compound = compound;
         }
 
-        public override void Accept<T>(IVisitor<T> visitor)
+        public override void Accept(IVisitor visitor)
         {
             visitor.Visit(this);
         }
@@ -91,7 +92,7 @@ namespace LSBASI3
             Type = type;
         }
 
-        public override void Accept<T>(IVisitor<T> visitor)
+        public override void Accept(IVisitor visitor)
         {
             visitor.Visit(this);
         }
@@ -106,9 +107,9 @@ namespace LSBASI3
             this.Value = token.Value;
         }
 
-        public override T Accept<T>(IVisitor<T> visitor)
+        public override T Accept<T>(IVisitor visitor)
         {
-            return visitor.Visit(this);
+            return visitor.Visit<T>(this);
         }
     }
 
@@ -121,7 +122,7 @@ namespace LSBASI3
             this.Children = children;
         }
 
-        public override void Accept<T>(IVisitor<T> visitor)
+        public override void Accept(IVisitor visitor)
         {
             visitor.Visit(this);
         }
@@ -138,7 +139,7 @@ namespace LSBASI3
             this.Result = result;
         }
 
-        public override void Accept<T>(IVisitor<T> visitor)
+        public override void Accept(IVisitor visitor)
         {
             visitor.Visit(this);
         }
@@ -146,7 +147,7 @@ namespace LSBASI3
 
     public class NoOpNode : StatementNode
     {
-        public override void Accept<T>(IVisitor<T> visitor)
+        public override void Accept(IVisitor visitor)
         {
             visitor.Visit(this);
         }
@@ -161,9 +162,9 @@ namespace LSBASI3
             this.Name = token.Value;
         }
 
-        public override T Accept<T>(IVisitor<T> visitor)
+        public override T Accept<T>(IVisitor visitor)
         {
-            return visitor.Visit(this);
+            return visitor.Visit<T>(this);
         }
     }
 
@@ -197,9 +198,9 @@ namespace LSBASI3
             }
         }
 
-        public override T Accept<T>(IVisitor<T> visitor)
+        public override T Accept<T>(IVisitor visitor)
         {
-            return visitor.Visit(this);
+            return visitor.Visit<T>(this);
         }
     }
 
@@ -223,24 +224,24 @@ namespace LSBASI3
             }
         }
 
-        public override T Accept<T>(IVisitor<T> visitor)
+        public override T Accept<T>(IVisitor visitor)
         {
-            return visitor.Visit(this);
+            return visitor.Visit<T>(this);
         }
     }
 
     public class NumberNode : ExpressionNode
     {
-        public int Value { get; set; }
+        public decimal Value { get; set; }
 
         public NumberNode(Token token) : base(token)
         {
-            this.Value = int.Parse(token.Value);
+            this.Value = decimal.Parse(token.Value, CultureInfo.InvariantCulture);
         }
 
-        public override T Accept<T>(IVisitor<T> visitor)
+        public override T Accept<T>(IVisitor visitor)
         {
-            return visitor.Visit(this);
+            return visitor.Visit<T>(this);
         }
     }
 
@@ -258,7 +259,7 @@ namespace LSBASI3
         Minus
     }
 
-    public interface IVisitor<T>
+    public interface IVisitor
     {
         void Visit(CompoundNode node);
 
@@ -266,13 +267,13 @@ namespace LSBASI3
 
         void Visit(AssignmentNode node);
 
-        T Visit(NumberNode node);
+        T Visit<T>(NumberNode node);
 
-        T Visit(VariableNode node);
+        T Visit<T>(VariableNode node);
 
-        T Visit(UnaryOperationNode node);
+        T Visit<T>(UnaryOperationNode node);
 
-        T Visit(BinaryOperationNode node);
+        T Visit<T>(BinaryOperationNode node);
 
         void Visit(ProgramNode node);
 
@@ -280,16 +281,16 @@ namespace LSBASI3
 
         void Visit(DeclarationNode node);
 
-        T Visit(TypeNode node);
+        T Visit<T>(TypeNode node);
     }
 
     public interface IExpression
     {
-        T Accept<T>(IVisitor<T> visitor);
+        T Accept<T>(IVisitor visitor);
     }
 
     public interface IStatement
     {
-        void Accept<T>(IVisitor<T> visitor);
+        void Accept(IVisitor visitor);
     }
 }

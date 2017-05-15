@@ -52,7 +52,7 @@ namespace LSBASI3
             }
         }
 
-        public StatementNode Parse()
+        public ProgramNode Parse()
         {
             var node = Program();
             if (CurrentToken.Type != TokenType.EOF)
@@ -62,7 +62,7 @@ namespace LSBASI3
             return node;
         }
 
-        public StatementNode Program()
+        public ProgramNode Program()
         {
             Eat(TokenType.Program);
             var name = Variable().Name;
@@ -94,6 +94,7 @@ namespace LSBASI3
             {
                 var declaration = VariableDeclaration();
                 declarations.AddRange(declaration);
+                Eat(TokenType.Semicolon);
             }
 
             return declarations;
@@ -113,6 +114,7 @@ namespace LSBASI3
 
             Eat(TokenType.Colon);
             var type = new TypeNode(CurrentToken);
+            Eat(CurrentToken.Type);
             return variables.Select(x => new DeclarationNode(x, type)).ToList();
         }
 

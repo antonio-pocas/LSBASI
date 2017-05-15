@@ -28,14 +28,15 @@ namespace LSBASI3
 
         public Token GetNextToken()
         {
-            SkipWhitespace();
-
-            if (CurrentChar != null)
+            while (CurrentChar != null)
             {
+                SkipWhitespace();
+
                 if (CurrentChar == "{")
                 {
                     Position++;
                     SkipComments();
+                    continue;
                 }
 
                 if (CurrentChar == "_" || char.IsLetter(Input[Position]))
