@@ -34,22 +34,22 @@ namespace LSBASI3
 
         public static Token Add()
         {
-            return new Token(TokenType.Add, "+");
+            return new Token(TokenType.Plus, "+");
         }
 
         public static Token Subtract()
         {
-            return new Token(TokenType.Subtract, "-");
+            return new Token(TokenType.Minus, "-");
         }
 
         public static Token Divide()
         {
-            return new Token(TokenType.Divide, "/");
+            return new Token(TokenType.Division, "div");
         }
 
         public static Token Multiply()
         {
-            return new Token(TokenType.Multiply, "*");
+            return new Token(TokenType.Star, "*");
         }
 
         public static Token LeftParen()
@@ -96,10 +96,10 @@ namespace LSBASI3
     public enum TokenType
     {
         Integer,
-        Add,
-        Subtract,
-        Divide,
-        Multiply,
+        Plus,
+        Minus,
+        Division,
+        Star,
         LeftParen,
         RightParen,
         Begin,
@@ -218,19 +218,19 @@ namespace LSBASI3
             this.Right = right;
             switch (token.Type)
             {
-                case TokenType.Add:
+                case TokenType.Plus:
                     this.Type = BinaryOperationType.Add;
                     break;
 
-                case TokenType.Subtract:
+                case TokenType.Minus:
                     this.Type = BinaryOperationType.Subtract;
                     break;
 
-                case TokenType.Divide:
+                case TokenType.Division:
                     this.Type = BinaryOperationType.Divide;
                     break;
 
-                case TokenType.Multiply:
+                case TokenType.Star:
                     this.Type = BinaryOperationType.Multiply;
                     break;
             }
@@ -252,11 +252,11 @@ namespace LSBASI3
             this.Child = child;
             switch (token.Type)
             {
-                case TokenType.Add:
+                case TokenType.Plus:
                     this.Type = UnaryOperationType.Plus;
                     break;
 
-                case TokenType.Subtract:
+                case TokenType.Minus:
                     this.Type = UnaryOperationType.Minus;
                     break;
             }

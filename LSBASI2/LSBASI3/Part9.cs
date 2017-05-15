@@ -14,8 +14,9 @@ namespace LSBASI3.Part9
 
         private readonly Dictionary<string, Token> ReservedKeywords = new Dictionary<string, Token>()
         {
-            { "BEGIN", new Token(TokenType.Begin, "BEGIN") },
-            { "END", new Token(TokenType.End, "END") },
+            { "BEGIN".ToLowerInvariant(), Token.Begin() },
+            { "END".ToLowerInvariant(), Token.End() },
+            { "div".ToLowerInvariant(), Token.Divide() },
         };
 
         public Lexer(string input)
@@ -29,7 +30,7 @@ namespace LSBASI3.Part9
 
             if (CurrentChar != null)
             {
-                if (char.IsLetter(Input[Position]))
+                if (CurrentChar == "_" || char.IsLetter(Input[Position]))
                 {
                     return IdOrReserved();
                 }
@@ -56,12 +57,6 @@ namespace LSBASI3.Part9
                 if (int.TryParse(CurrentChar, out tempValue))
                 {
                     return Integer();
-                }
-
-                if (CurrentChar == "/")
-                {
-                    Position++;
-                    return Token.Divide();
                 }
 
                 if (CurrentChar == "*")
@@ -113,27 +108,27 @@ namespace LSBASI3.Part9
             return new Token(TokenType.Integer, sb.ToString());
         }
 
-        private void SkipWhitespace()
-        {
-            while (Position < Input.Length && char.IsWhiteSpace(Input[Position]))
-            {
-                Position++;
-            }
-        }
-
         private Token IdOrReserved()
         {
             var builder = new StringBuilder();
-            while (CurrentChar != null && char.IsLetterOrDigit(Input[Position]))
+            while (CurrentChar != null && (CurrentChar == "_" || char.IsLetterOrDigit(Input[Position])))
             {
                 builder.Append(Input[Position++]);
             }
 
             var word = builder.ToString();
             Token token;
-            ReservedKeywords.TryGetValue(word, out token);
+            ReservedKeywords.TryGetValue(word.ToLowerInvariant(), out token);
 
             return token ?? Token.Id(word);
+        }
+
+        private void SkipWhitespace()
+        {
+            while (Position < Input.Length && char.IsWhiteSpace(Input[Position]))
+            {
+                Position++;
+            }
         }
 
         private string Peek() => Position + 1 < Input.Length ? Input[Position + 1].ToString() : null;
@@ -157,8 +152,8 @@ namespace LSBASI3.Part9
         private Token currentToken;
         private readonly Lexer lexer;
 
-        private readonly HashSet<TokenType> termOperationTokens = new HashSet<TokenType>() { TokenType.Multiply, TokenType.Divide };
-        private readonly HashSet<TokenType> exprOperationTokens = new HashSet<TokenType>() { TokenType.Add, TokenType.Subtract };
+        private readonly HashSet<TokenType> termOperationTokens = new HashSet<TokenType>() { TokenType.Star, TokenType.Division };
+        private readonly HashSet<TokenType> exprOperationTokens = new HashSet<TokenType>() { TokenType.Plus, TokenType.Minus };
 
         public Parser(Lexer lexer)
         {
@@ -254,16 +249,16 @@ namespace LSBASI3.Part9
             var result = Term();
             while (exprOperationTokens.Contains(currentToken.Type))
             {
-                if (currentToken.Type == TokenType.Add)
+                if (currentToken.Type == TokenType.Plus)
                 {
                     var token = currentToken;
-                    Eat(TokenType.Add);
+                    Eat(TokenType.Plus);
                     result = new BinaryOperationNode(token, result, Term());
                 }
-                else if (currentToken.Type == TokenType.Subtract)
+                else if (currentToken.Type == TokenType.Minus)
                 {
                     var token = currentToken;
-                    Eat(TokenType.Subtract);
+                    Eat(TokenType.Minus);
                     result = new BinaryOperationNode(token, result, Term());
                 }
             }
@@ -276,16 +271,16 @@ namespace LSBASI3.Part9
             var result = Factor();
             while (termOperationTokens.Contains(currentToken.Type))
             {
-                if (currentToken.Type == TokenType.Multiply)
+                if (currentToken.Type == TokenType.Star)
                 {
                     var token = currentToken;
-                    Eat(TokenType.Multiply);
+                    Eat(TokenType.Star);
                     result = new BinaryOperationNode(token, result, Factor());
                 }
-                else if (currentToken.Type == TokenType.Divide)
+                else if (currentToken.Type == TokenType.Division)
                 {
                     var token = currentToken;
-                    Eat(TokenType.Divide);
+                    Eat(TokenType.Division);
                     result = new BinaryOperationNode(token, result, Factor());
                 }
             }
@@ -295,17 +290,17 @@ namespace LSBASI3.Part9
 
         private ExpressionNode Factor()
         {
-            if (currentToken.Type == TokenType.Add)
+            if (currentToken.Type == TokenType.Plus)
             {
                 var token = currentToken;
-                Eat(TokenType.Add);
+                Eat(TokenType.Plus);
                 return new UnaryOperationNode(token, Factor());
             }
 
-            if (currentToken.Type == TokenType.Subtract)
+            if (currentToken.Type == TokenType.Minus)
             {
                 var token = currentToken;
-                Eat(TokenType.Subtract);
+                Eat(TokenType.Minus);
                 return new UnaryOperationNode(token, Factor());
             }
 
