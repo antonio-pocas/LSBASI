@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LSBASI2
+namespace LSBASI3
 {
     public class Token
     {
@@ -115,47 +115,104 @@ namespace LSBASI2
     {
         public Token token;
 
+        public AstNode()
+        {
+        }
+
         public AstNode(Token token)
         {
             this.token = token;
+        }
+    }
+
+    public abstract class StatementNode : AstNode
+    {
+        public StatementNode()
+        {
+        }
+
+        public StatementNode(Token token) : base(token)
+        {
+        }
+
+        public abstract void Accept<T>(IVisitor<T> visitor);
+    }
+
+    public abstract class ExpressionNode : AstNode
+    {
+        public ExpressionNode()
+        {
+        }
+
+        public ExpressionNode(Token token) : base(token)
+        {
         }
 
         public abstract T Accept<T>(IVisitor<T> visitor);
     }
 
-    //public class StatementNode : AstNode
-    //{
-    //    public AstNode Child { get; set; }
-    //    public UnaryOperationType Type { get; set; }
-
-    //    public StatementNode(Token token, AstNode child) : base(token)
-    //    {
-    //        this.Child = child;
-    //        switch (token.Type)
-    //        {
-    //            case TokenType.Add:
-    //                this.Type = UnaryOperationType.Plus;
-    //                break;
-
-    //            case TokenType.Subtract:
-    //                this.Type = UnaryOperationType.Minus;
-    //                break;
-    //        }
-    //    }
-
-    //    public override T Accept<T>(IVisitor<T> visitor)
-    //    {
-    //        return visitor.Visit(this);
-    //    }
-    //}
-
-    public class BinaryOperationNode : AstNode
+    public class CompoundNode : StatementNode
     {
-        public AstNode Left { get; set; }
-        public AstNode Right { get; set; }
+        public List<StatementNode> Children { get; set; }
+
+        public CompoundNode(List<StatementNode> children)
+        {
+            this.Children = children;
+        }
+
+        public override void Accept<T>(IVisitor<T> visitor)
+        {
+            visitor.Visit(this);
+        }
+    }
+
+    public class AssignmentNode : StatementNode
+    {
+        public VariableNode Variable { get; set; }
+        public ExpressionNode Result { get; set; }
+
+        public AssignmentNode(Token token, VariableNode variable, ExpressionNode result) : base(token)
+        {
+            this.Variable = variable;
+            this.Result = result;
+        }
+
+        public override void Accept<T>(IVisitor<T> visitor)
+        {
+            visitor.Visit(this);
+        }
+    }
+
+    public class NoOpNode : StatementNode
+    {
+        public override void Accept<T>(IVisitor<T> visitor)
+        {
+            visitor.Visit(this);
+        }
+    }
+
+    public class VariableNode : ExpressionNode
+    {
+        public string Name { get; set; }
+
+        public VariableNode(Token token) : base(token)
+        {
+            this.Name = token.Value;
+        }
+
+        public override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
+    }
+
+    public class BinaryOperationNode : ExpressionNode
+    {
+        public ExpressionNode Left { get; set; }
+        public ExpressionNode Right { get; set; }
         public BinaryOperationType Type { get; set; }
 
-        public BinaryOperationNode(Token token, AstNode left, AstNode right) : base(token)
+        public BinaryOperationNode(Token token, ExpressionNode left, ExpressionNode right) : base(token)
         {
             this.Left = left;
             this.Right = right;
@@ -185,12 +242,12 @@ namespace LSBASI2
         }
     }
 
-    public class UnaryOperationNode : AstNode
+    public class UnaryOperationNode : ExpressionNode
     {
-        public AstNode Child { get; set; }
+        public ExpressionNode Child { get; set; }
         public UnaryOperationType Type { get; set; }
 
-        public UnaryOperationNode(Token token, AstNode child) : base(token)
+        public UnaryOperationNode(Token token, ExpressionNode child) : base(token)
         {
             this.Child = child;
             switch (token.Type)
@@ -211,7 +268,7 @@ namespace LSBASI2
         }
     }
 
-    public class NumberNode : AstNode
+    public class NumberNode : ExpressionNode
     {
         public int Value { get; set; }
 
@@ -242,7 +299,15 @@ namespace LSBASI2
 
     public interface IVisitor<T>
     {
+        void Visit(CompoundNode node);
+
+        void Visit(NoOpNode node);
+
+        void Visit(AssignmentNode node);
+
         T Visit(NumberNode node);
+
+        T Visit(VariableNode node);
 
         T Visit(UnaryOperationNode node);
 

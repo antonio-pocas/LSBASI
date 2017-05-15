@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LSBASI2.Part9
+namespace LSBASI3.Part9
 {
     public class Lexer
     {
@@ -42,11 +42,13 @@ namespace LSBASI2.Part9
 
                 if (CurrentChar == ";")
                 {
+                    Position++;
                     return Token.Semicolon();
                 }
 
                 if (CurrentChar == ".")
                 {
+                    Position++;
                     return Token.Dot();
                 }
 
@@ -113,7 +115,7 @@ namespace LSBASI2.Part9
 
         private void SkipWhitespace()
         {
-            while (CurrentChar == " ")
+            while (Position < Input.Length && char.IsWhiteSpace(Input[Position]))
             {
                 Position++;
             }
@@ -142,10 +144,10 @@ namespace LSBASI2.Part9
     /// Program:                    CompoundStatement DOT
     /// CompoundStatement:          BEGIN StatementList END
     /// StatementList:              Statement | Statement SEMI StatementList
-    /// Statement:                  CoumpoundStatement | AssignmentStatement | Empty
+    /// Statement:                  CoumpoundStatement | AssignmentStatement | EmptyRule
     /// AssignmentStatement:        Variable ASSIGN Expr
     /// Variable:                   ID
-    /// Empty:
+    /// EmptyRule:
     /// Expr:                       Term ((ADD|SUB) Term)*
     /// Term:                       Factor ((MUL|DIV) Factor)*
     /// Factor:                     + Factor | -Factor | INTEGER | LPAREN Expr RPAREN | Variable
@@ -157,7 +159,6 @@ namespace LSBASI2.Part9
 
         private readonly HashSet<TokenType> termOperationTokens = new HashSet<TokenType>() { TokenType.Multiply, TokenType.Divide };
         private readonly HashSet<TokenType> exprOperationTokens = new HashSet<TokenType>() { TokenType.Add, TokenType.Subtract };
-        private readonly HashSet<TokenType> factorOperationTokens = new HashSet<TokenType>() { TokenType.Add, TokenType.Subtract };
 
         public Parser(Lexer lexer)
         {
@@ -177,27 +178,78 @@ namespace LSBASI2.Part9
             }
         }
 
-        public AstNode Program()
+        public StatementNode Parse()
+        {
+            var node = Program();
+            if (currentToken.Type != TokenType.EOF)
+            {
+                throw new InvalidOperationException("Last token is not EOF");
+            }
+            return node;
+        }
+
+        public StatementNode Program()
         {
             var program = CompoundStatement();
             Eat(TokenType.Dot);
             return program;
         }
 
-        private AstNode CompoundStatement()
+        private StatementNode CompoundStatement()
         {
             Eat(TokenType.Begin);
-            var node = StatementList();
+            var compound = new CompoundNode(StatementList());
             Eat(TokenType.End);
-            return node;
+            return compound;
         }
 
-        private AstNode StatementList()
+        private List<StatementNode> StatementList()
         {
-            throw new NotImplementedException();
+            var nodes = new List<StatementNode>() { Statement() };
+            while (currentToken.Type == TokenType.Semicolon)
+            {
+                Eat(TokenType.Semicolon);
+                nodes.Add(Statement());
+            }
+
+            if (currentToken.Type == TokenType.Id)
+            {
+                throw new InvalidOperationException("variable in wrong place");
+            }
+
+            return nodes;
         }
 
-        private AstNode Expr()
+        private StatementNode Statement()
+        {
+            if (currentToken.Type == TokenType.Begin)
+            {
+                return CompoundStatement();
+            }
+
+            if (currentToken.Type == TokenType.Id)
+            {
+                return AssignmentStatement();
+            }
+
+            return EmptyRule();
+        }
+
+        private AssignmentNode AssignmentStatement()
+        {
+            var variable = Variable();
+            var token = currentToken;
+            Eat(TokenType.Assign);
+            var result = Expr();
+            return new AssignmentNode(token, variable, result);
+        }
+
+        private StatementNode EmptyRule()
+        {
+            return new NoOpNode();
+        }
+
+        private ExpressionNode Expr()
         {
             var result = Term();
             while (exprOperationTokens.Contains(currentToken.Type))
@@ -219,7 +271,7 @@ namespace LSBASI2.Part9
             return result;
         }
 
-        private AstNode Term()
+        private ExpressionNode Term()
         {
             var result = Factor();
             while (termOperationTokens.Contains(currentToken.Type))
@@ -241,14 +293,22 @@ namespace LSBASI2.Part9
             return result;
         }
 
-        private AstNode Factor()
+        private ExpressionNode Factor()
         {
-            if (factorOperationTokens.Contains(currentToken.Type))
+            if (currentToken.Type == TokenType.Add)
             {
                 var token = currentToken;
-                Eat(currentToken.Type);
+                Eat(TokenType.Add);
                 return new UnaryOperationNode(token, Factor());
             }
+
+            if (currentToken.Type == TokenType.Subtract)
+            {
+                var token = currentToken;
+                Eat(TokenType.Subtract);
+                return new UnaryOperationNode(token, Factor());
+            }
+
             if (currentToken.Type == TokenType.Integer)
             {
                 var value = new NumberNode(currentToken);
@@ -256,66 +316,107 @@ namespace LSBASI2.Part9
                 return value;
             }
 
-            Eat(TokenType.LeftParen);
-            var ret = Expr();
-            Eat(TokenType.RightParen);
-            return ret;
+            if (currentToken.Type == TokenType.LeftParen)
+            {
+                Eat(TokenType.LeftParen);
+                var ret = Expr();
+                Eat(TokenType.RightParen);
+                return ret;
+            }
+
+            return Variable();
+        }
+
+        private VariableNode Variable()
+        {
+            var token = currentToken;
+            Eat(TokenType.Id);
+            return new VariableNode(token);
         }
     }
 
-    //public class Interpreter : IVisitor<int>
-    //{
-    //    private Parser parser;
-    //    private readonly AstNode rootNode;
+    public class Interpreter : IVisitor<int>
+    {
+        private Parser parser;
+        private readonly StatementNode rootNode;
+        private readonly Dictionary<string, int> SymbolTable;
 
-    //    public Interpreter(Parser parser)
-    //    {
-    //        this.parser = parser;
-    //        this.rootNode = parser.Expr();
-    //    }
+        public Interpreter(Parser parser)
+        {
+            this.parser = parser;
+            this.SymbolTable = new Dictionary<string, int>();
+            this.rootNode = parser.Program();
+        }
 
-    //    public int Evaluate()
-    //    {
-    //        return this.rootNode.Accept(this);
-    //    }
+        public void Evaluate()
+        {
+            this.rootNode.Accept(this);
+        }
 
-    //    public int Visit(UnaryOperationNode node)
-    //    {
-    //        switch (node.Type)
-    //        {
-    //            case UnaryOperationType.Plus:
-    //                return +node.Child.Accept(this);
+        public int Visit(UnaryOperationNode node)
+        {
+            switch (node.Type)
+            {
+                case UnaryOperationType.Plus:
+                    return +node.Child.Accept(this);
 
-    //            case UnaryOperationType.Minus:
-    //                return -node.Child.Accept(this);
-    //        }
+                case UnaryOperationType.Minus:
+                    return -node.Child.Accept(this);
+            }
 
-    //        throw new Exception();
-    //    }
+            throw new Exception();
+        }
 
-    //    int IVisitor<int>.Visit(BinaryOperationNode node)
-    //    {
-    //        switch (node.Type)
-    //        {
-    //            case BinaryOperationType.Add:
-    //                return node.Left.Accept(this) + node.Right.Accept(this);
+        void IVisitor<int>.Visit(NoOpNode node)
+        {
+        }
 
-    //            case BinaryOperationType.Subtract:
-    //                return node.Left.Accept(this) - node.Right.Accept(this);
+        void IVisitor<int>.Visit(AssignmentNode assignmentNode)
+        {
+            SymbolTable[assignmentNode.Variable.Name] = assignmentNode.Result.Accept(this);
+        }
 
-    //            case BinaryOperationType.Multiply:
-    //                return node.Left.Accept(this) * node.Right.Accept(this);
+        int IVisitor<int>.Visit(VariableNode node)
+        {
+            int value;
+            if (!SymbolTable.TryGetValue(node.Name, out value))
+            {
+                throw new InvalidOperationException($"Unassigned variable {node.Name}");
+            }
+            return value;
+        }
 
-    //            case BinaryOperationType.Divide:
-    //                return node.Left.Accept(this) / node.Right.Accept(this);
-    //        }
+        void IVisitor<int>.Visit(CompoundNode node)
+        {
+            foreach (var child in node.Children)
+            {
+                child.Accept(this);
+            }
+        }
 
-    //        throw new Exception();
-    //    }
+        int IVisitor<int>.Visit(BinaryOperationNode node)
+        {
+            switch (node.Type)
+            {
+                case BinaryOperationType.Add:
+                    return node.Left.Accept(this) + node.Right.Accept(this);
 
-    //    int IVisitor<int>.Visit(NumberNode node)
-    //    {
-    //        return node.Value;
-    //    }
-    //}
+                case BinaryOperationType.Subtract:
+                    return node.Left.Accept(this) - node.Right.Accept(this);
+
+                case BinaryOperationType.Multiply:
+                    return node.Left.Accept(this) * node.Right.Accept(this);
+
+                case BinaryOperationType.Divide:
+                    return node.Left.Accept(this) / node.Right.Accept(this);
+            }
+
+            throw new Exception();
+        }
+
+        int IVisitor<int>.Visit(NumberNode node)
+        {
+            return node.Value;
+        }
+    }
 }
