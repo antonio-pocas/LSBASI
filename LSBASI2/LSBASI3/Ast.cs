@@ -6,111 +6,6 @@ using System.Threading.Tasks;
 
 namespace LSBASI3
 {
-    public class Token
-    {
-        public TokenType Type { get; set; }
-        public string Value { get; set; }
-
-        public Token(TokenType tokenType, string value)
-        {
-            Type = tokenType;
-            Value = value;
-        }
-
-        public override string ToString()
-        {
-            return $"Token({Type.ToString()}, {Value})";
-        }
-
-        public static Token EOF()
-        {
-            return new Token(TokenType.EOF, string.Empty);
-        }
-
-        public static Token Assign()
-        {
-            return new Token(TokenType.Assign, ":=");
-        }
-
-        public static Token Add()
-        {
-            return new Token(TokenType.Plus, "+");
-        }
-
-        public static Token Subtract()
-        {
-            return new Token(TokenType.Minus, "-");
-        }
-
-        public static Token Divide()
-        {
-            return new Token(TokenType.Division, "div");
-        }
-
-        public static Token Multiply()
-        {
-            return new Token(TokenType.Star, "*");
-        }
-
-        public static Token LeftParen()
-        {
-            return new Token(TokenType.LeftParen, "(");
-        }
-
-        public static Token RightParen()
-        {
-            return new Token(TokenType.RightParen, ")");
-        }
-
-        public static Token Begin()
-        {
-            return new Token(TokenType.Begin, "BEGIN");
-        }
-
-        public static Token End()
-        {
-            return new Token(TokenType.End, "END");
-        }
-
-        public static Token Semicolon()
-        {
-            return new Token(TokenType.Semicolon, ";");
-        }
-
-        public static Token Dot()
-        {
-            return new Token(TokenType.Dot, ".");
-        }
-
-        public static Token Id(string value)
-        {
-            return new Token(TokenType.Id, value);
-        }
-
-        public static Token Integer(string value)
-        {
-            return new Token(TokenType.Integer, value);
-        }
-    }
-
-    public enum TokenType
-    {
-        Integer,
-        Plus,
-        Minus,
-        Division,
-        Star,
-        LeftParen,
-        RightParen,
-        Begin,
-        End,
-        Semicolon,
-        Dot,
-        Assign,
-        Id,
-        EOF
-    }
-
     public abstract class AstNode
     {
         public Token token;
@@ -149,6 +44,72 @@ namespace LSBASI3
         }
 
         public abstract T Accept<T>(IVisitor<T> visitor);
+    }
+
+    public class ProgramNode : StatementNode
+    {
+        public string Name { get; set; }
+        public BlockNode Block { get; set; }
+
+        public ProgramNode(string name, BlockNode block)
+        {
+            this.Name = name;
+            Block = block;
+        }
+
+        public override void Accept<T>(IVisitor<T> visitor)
+        {
+            visitor.Visit(this);
+        }
+    }
+
+    public class BlockNode : StatementNode
+    {
+        public List<StatementNode> Declarations { get; set; }
+        public CompoundNode Compound { get; set; }
+
+        public BlockNode(List<StatementNode> declarations, CompoundNode compound)
+        {
+            Declarations = declarations;
+            Compound = compound;
+        }
+
+        public override void Accept<T>(IVisitor<T> visitor)
+        {
+            visitor.Visit(this);
+        }
+    }
+
+    public class DeclarationNode : StatementNode
+    {
+        public VariableNode Variable { get; set; }
+        public TypeNode Type { get; set; }
+
+        public DeclarationNode(VariableNode variable, TypeNode type)
+        {
+            Variable = variable;
+            Type = type;
+        }
+
+        public override void Accept<T>(IVisitor<T> visitor)
+        {
+            visitor.Visit(this);
+        }
+    }
+
+    public class TypeNode : ExpressionNode
+    {
+        public string Value { get; set; }
+
+        public TypeNode(Token token) : base(token)
+        {
+            this.Value = token.Value;
+        }
+
+        public override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.Visit(this);
+        }
     }
 
     public class CompoundNode : StatementNode
@@ -226,7 +187,7 @@ namespace LSBASI3
                     this.Type = BinaryOperationType.Subtract;
                     break;
 
-                case TokenType.Division:
+                case TokenType.IntegerDivision:
                     this.Type = BinaryOperationType.Divide;
                     break;
 
@@ -312,5 +273,23 @@ namespace LSBASI3
         T Visit(UnaryOperationNode node);
 
         T Visit(BinaryOperationNode node);
+
+        void Visit(ProgramNode node);
+
+        void Visit(BlockNode node);
+
+        void Visit(DeclarationNode node);
+
+        T Visit(TypeNode node);
+    }
+
+    public interface IExpression
+    {
+        T Accept<T>(IVisitor<T> visitor);
+    }
+
+    public interface IStatement
+    {
+        void Accept<T>(IVisitor<T> visitor);
     }
 }
