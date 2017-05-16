@@ -11,28 +11,14 @@ namespace LSBASI3
         private static void Main(string[] args)
         {
             //var x = Console.ReadLine();
-            var x = @"PROGRAM Part10;
+            var x = @"PROGRAM NameError2;
 VAR
-   number     : INTEGER;
-   a, b, c, x : INTEGER;
-   y          : REAL;
+   b : INTEGER;
 
-BEGIN {Part10}
-   BEGIN
-      number := 2;
-      a := number;
-      b := 10 * a + 10 * number DIV 4;
-      c := a - - b
-   END;
-   x := 11;
-   y := 20 / 7 + 3.14;
-   { writeln('a = ', a); }
-   { writeln('b = ', b); }
-   { writeln('c = ', c); }
-   { writeln('number = ', number); }
-   { writeln('x = ', x); }
-   { writeln('y = ', y); }
-END.  {Part10}";
+BEGIN
+   b := 1;
+   a := b + 2;
+END.";
 
             var lexer = new Lexer(x);
             var parser = new Parser(lexer);

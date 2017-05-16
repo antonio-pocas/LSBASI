@@ -8,7 +8,7 @@
 //    public class Interpreter : IVisitor
 //    {
 //        private Parser parser;
-//        private readonly StatementNode rootNode;
+//        private readonly AstNode rootNode;
 //        private readonly Dictionary<string, object> SymbolTable;
 
 //        public Interpreter(Parser parser)

@@ -38,30 +38,12 @@ namespace LSBASI3
 
         public void Visit(AssignmentNode node)
         {
-            node.Variable.Accept<bool>(this);
-            node.Result.Accept<bool>(this);
-        }
-
-        public T Visit<T>(NumberNode node)
-        {
-            return default(T);
-        }
-
-        public T Visit<T>(VariableNode node)
-        {
-            return default(T);
-        }
-
-        public T Visit<T>(UnaryOperationNode node)
-        {
-            return node.Child.Accept<T>(this);
-        }
-
-        public T Visit<T>(BinaryOperationNode node)
-        {
-            node.Left.Accept<bool>(this);
-            node.Right.Accept<bool>(this);
-            return default(T);
+            var name = node.Variable.Name;
+            var symbol = table.Lookup<VarSymbol>(name);
+            if (symbol == null)
+            {
+                throw new Exception($"Assignment of uninitialized variable {name}");
+            }
         }
 
         public void Visit(ProgramNode node)
@@ -75,6 +57,7 @@ namespace LSBASI3
             {
                 declaration.Accept(this);
             }
+            node.Compound.Accept(this);
         }
 
         public void Visit(DeclarationNode node)
@@ -83,9 +66,87 @@ namespace LSBASI3
             this.table.Define(symbol);
         }
 
+        public void Visit(VariableNode variableNode)
+        {
+            var name = variableNode.Name;
+            if (table.Lookup<VarSymbol>(name) == null)
+            {
+                throw new Exception($"Use of uninitialized variable {name}");
+            }
+        }
+
+        public void Visit(BinaryOperationNode binaryOperationNode)
+        {
+            binaryOperationNode.Left.Accept(this);
+            binaryOperationNode.Right.Accept(this);
+        }
+
+        public void Visit(UnaryOperationNode unaryOperationNode)
+        {
+            unaryOperationNode.Child.Accept(this);
+        }
+
+        public void Visit(NumberNode numberNode)
+        {
+        }
+
+        public void Visit(TypeNode typeNode)
+        {
+        }
+
+        public T Visit<T>(ProgramNode programNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public T Visit<T>(BlockNode blockNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public T Visit<T>(DeclarationNode declarationNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public T Visit<T>(CompoundNode compoundNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public T Visit<T>(AssignmentNode assignmentNode)
+        {
+            throw new NotImplementedException();
+        }
+
         public T Visit<T>(TypeNode node)
         {
-            return default(T);
+            throw new NotImplementedException();
+        }
+
+        public T Visit<T>(NoOpNode noOpNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public T Visit<T>(NumberNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public T Visit<T>(VariableNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public T Visit<T>(UnaryOperationNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public T Visit<T>(BinaryOperationNode node)
+        {
+            throw new NotImplementedException();
         }
     }
 
@@ -113,6 +174,13 @@ namespace LSBASI3
             Symbol symbol;
             table.TryGetValue(name, out symbol);
             return symbol as T;
+        }
+
+        public Symbol Lookup(string name)
+        {
+            Symbol symbol;
+            table.TryGetValue(name, out symbol);
+            return symbol;
         }
     }
 }

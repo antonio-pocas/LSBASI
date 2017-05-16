@@ -81,15 +81,15 @@ namespace LSBASI3
             return new BlockNode(declarations, program);
         }
 
-        private List<StatementNode> Declarations()
+        private List<AstNode> Declarations()
         {
             if (CurrentToken.Type != TokenType.Var)
             {
-                return new List<StatementNode>() { EmptyRule() };
+                return new List<AstNode>() { EmptyRule() };
             }
 
             Eat(TokenType.Var);
-            var declarations = new List<StatementNode>();
+            var declarations = new List<AstNode>();
             while (CurrentToken.Type == TokenType.Id)
             {
                 var declaration = VariableDeclaration();
@@ -139,9 +139,9 @@ namespace LSBASI3
             return compound;
         }
 
-        private List<StatementNode> StatementList()
+        private List<AstNode> StatementList()
         {
-            var nodes = new List<StatementNode>() { Statement() };
+            var nodes = new List<AstNode>() { Statement() };
             while (CurrentToken.Type == TokenType.Semicolon)
             {
                 Eat(TokenType.Semicolon);
@@ -156,7 +156,7 @@ namespace LSBASI3
             return nodes;
         }
 
-        private StatementNode Statement()
+        private AstNode Statement()
         {
             if (CurrentToken.Type == TokenType.Begin)
             {
@@ -180,12 +180,12 @@ namespace LSBASI3
             return new AssignmentNode(token, variable, result);
         }
 
-        private StatementNode EmptyRule()
+        private AstNode EmptyRule()
         {
             return new NoOpNode();
         }
 
-        private ExpressionNode Expr()
+        private AstNode Expr()
         {
             var result = Term();
             while (exprOperationTokens.Contains(CurrentToken.Type))
@@ -207,7 +207,7 @@ namespace LSBASI3
             return result;
         }
 
-        private ExpressionNode Term()
+        private AstNode Term()
         {
             var result = Factor();
             while (termOperationTokens.Contains(CurrentToken.Type))
@@ -233,7 +233,7 @@ namespace LSBASI3
             return result;
         }
 
-        private ExpressionNode Factor()
+        private AstNode Factor()
         {
             if (CurrentToken.Type == TokenType.Plus)
             {
