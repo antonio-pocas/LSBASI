@@ -14,6 +14,11 @@ namespace LSBASI3
         {
             this.Name = name;
         }
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 
     public class TypeSymbol : Symbol
@@ -37,6 +42,11 @@ namespace LSBASI3
         public TypedSymbol(string name, TypeSymbol type) : base(name)
         {
             Type = type;
+        }
+
+        public override string ToString()
+        {
+            return $"{Name} : {Type}";
         }
     }
 
