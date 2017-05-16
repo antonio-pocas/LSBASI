@@ -207,7 +207,15 @@ namespace LSBASI3
 
         public TypedValue Evaluate(VariableNode node)
         {
-            return globalMemory[node.Name];
+            var name = node.Name;
+
+            TypedValue value;
+            if (!globalMemory.TryGetValue(name, out value))
+            {
+                throw new Exception($"Unassigned variable {name}");
+            }
+
+            return value;
         }
 
         public TypedValue Evaluate(UnaryOperationNode node)

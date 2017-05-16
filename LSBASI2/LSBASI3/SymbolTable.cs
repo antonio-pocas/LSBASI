@@ -44,6 +44,7 @@ namespace LSBASI3
             {
                 throw new Exception($"Assignment of uninitialized variable {name}");
             }
+            node.Result.Accept(this);
         }
 
         public void Visit(ProgramNode node)
@@ -111,6 +112,11 @@ namespace LSBASI3
         public void Define(Symbol symbol)
         {
             table[symbol.Name] = symbol;
+        }
+
+        public bool Exists(string name)
+        {
+            return table.ContainsKey(name);
         }
 
         public T Lookup<T>(string name)
