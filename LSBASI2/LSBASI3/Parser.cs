@@ -62,7 +62,7 @@ namespace LSBASI3
             return node;
         }
 
-        public ProgramNode Program()
+        private ProgramNode Program()
         {
             Eat(TokenType.Program);
             var name = Variable().Name;
@@ -113,8 +113,7 @@ namespace LSBASI3
             }
 
             Eat(TokenType.Colon);
-            var type = new TypeNode(CurrentToken);
-            Eat(CurrentToken.Type);
+            var type = TypeSpecification();
             return variables.Select(x => new DeclarationNode(x, type)).ToList();
         }
 

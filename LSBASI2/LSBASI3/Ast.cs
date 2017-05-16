@@ -22,7 +22,7 @@ namespace LSBASI3
 
         public abstract void Accept(IVisitor visitor);
 
-        public abstract T Accept<T>(IVisitor visitor);
+        public abstract T Yield<T>(IEvaluator<T> visitor);
     }
 
     public class ProgramNode : AstNode
@@ -41,9 +41,9 @@ namespace LSBASI3
             visitor.Visit(this);
         }
 
-        public override T Accept<T>(IVisitor visitor)
+        public override T Yield<T>(IEvaluator<T> evaluator)
         {
-            return visitor.Visit<T>(this);
+            return evaluator.Evaluate(this);
         }
     }
 
@@ -63,9 +63,9 @@ namespace LSBASI3
             visitor.Visit(this);
         }
 
-        public override T Accept<T>(IVisitor visitor)
+        public override T Yield<T>(IEvaluator<T> evaluator)
         {
-            return visitor.Visit<T>(this);
+            return evaluator.Evaluate(this);
         }
     }
 
@@ -85,9 +85,9 @@ namespace LSBASI3
             visitor.Visit(this);
         }
 
-        public override T Accept<T>(IVisitor visitor)
+        public override T Yield<T>(IEvaluator<T> evaluator)
         {
-            return visitor.Visit<T>(this);
+            return evaluator.Evaluate(this);
         }
     }
 
@@ -100,9 +100,9 @@ namespace LSBASI3
             this.Value = token.Value;
         }
 
-        public override T Accept<T>(IVisitor visitor)
+        public override T Yield<T>(IEvaluator<T> evaluator)
         {
-            return visitor.Visit<T>(this);
+            return evaluator.Evaluate(this);
         }
 
         public override void Accept(IVisitor visitor)
@@ -125,9 +125,9 @@ namespace LSBASI3
             visitor.Visit(this);
         }
 
-        public override T Accept<T>(IVisitor visitor)
+        public override T Yield<T>(IEvaluator<T> evaluator)
         {
-            return visitor.Visit<T>(this);
+            return evaluator.Evaluate(this);
         }
     }
 
@@ -147,9 +147,9 @@ namespace LSBASI3
             visitor.Visit(this);
         }
 
-        public override T Accept<T>(IVisitor visitor)
+        public override T Yield<T>(IEvaluator<T> evaluator)
         {
-            return visitor.Visit<T>(this);
+            return evaluator.Evaluate(this);
         }
     }
 
@@ -160,9 +160,9 @@ namespace LSBASI3
             visitor.Visit(this);
         }
 
-        public override T Accept<T>(IVisitor visitor)
+        public override T Yield<T>(IEvaluator<T> evaluator)
         {
-            return visitor.Visit<T>(this);
+            return evaluator.Evaluate(this);
         }
     }
 
@@ -175,9 +175,9 @@ namespace LSBASI3
             this.Name = token.Value;
         }
 
-        public override T Accept<T>(IVisitor visitor)
+        public override T Yield<T>(IEvaluator<T> evaluator)
         {
-            return visitor.Visit<T>(this);
+            return evaluator.Evaluate(this);
         }
 
         public override void Accept(IVisitor visitor)
@@ -207,7 +207,11 @@ namespace LSBASI3
                     break;
 
                 case TokenType.IntegerDivision:
-                    this.Type = BinaryOperationType.Divide;
+                    this.Type = BinaryOperationType.IntegerDivision;
+                    break;
+
+                case TokenType.Slash:
+                    this.Type = BinaryOperationType.RealDivision;
                     break;
 
                 case TokenType.Star:
@@ -216,9 +220,9 @@ namespace LSBASI3
             }
         }
 
-        public override T Accept<T>(IVisitor visitor)
+        public override T Yield<T>(IEvaluator<T> evaluator)
         {
-            return visitor.Visit<T>(this);
+            return evaluator.Evaluate(this);
         }
 
         public override void Accept(IVisitor visitor)
@@ -247,9 +251,9 @@ namespace LSBASI3
             }
         }
 
-        public override T Accept<T>(IVisitor visitor)
+        public override T Yield<T>(IEvaluator<T> evaluator)
         {
-            return visitor.Visit<T>(this);
+            return evaluator.Evaluate(this);
         }
 
         public override void Accept(IVisitor visitor)
@@ -260,16 +264,16 @@ namespace LSBASI3
 
     public class NumberNode : AstNode
     {
-        public decimal Value { get; set; }
+        public string Value { get; set; }
 
         public NumberNode(Token token) : base(token)
         {
-            this.Value = decimal.Parse(token.Value, CultureInfo.InvariantCulture);
+            this.Value = token.Value;
         }
 
-        public override T Accept<T>(IVisitor visitor)
+        public override T Yield<T>(IEvaluator<T> evaluator)
         {
-            return visitor.Visit<T>(this);
+            return evaluator.Evaluate(this);
         }
 
         public override void Accept(IVisitor visitor)
@@ -283,7 +287,8 @@ namespace LSBASI3
         Add,
         Subtract,
         Multiply,
-        Divide
+        IntegerDivision,
+        RealDivision
     }
 
     public enum UnaryOperationType
@@ -300,23 +305,11 @@ namespace LSBASI3
 
         void Visit(AssignmentNode node);
 
-        T Visit<T>(NumberNode node);
-
-        T Visit<T>(VariableNode node);
-
-        T Visit<T>(UnaryOperationNode node);
-
-        T Visit<T>(BinaryOperationNode node);
-
         void Visit(ProgramNode node);
 
         void Visit(BlockNode node);
 
         void Visit(DeclarationNode node);
-
-        T Visit<T>(TypeNode node);
-
-        T Visit<T>(NoOpNode noOpNode);
 
         void Visit(VariableNode variableNode);
 
@@ -326,26 +319,31 @@ namespace LSBASI3
 
         void Visit(NumberNode numberNode);
 
-        T Visit<T>(ProgramNode programNode);
-
-        T Visit<T>(BlockNode blockNode);
-
-        T Visit<T>(DeclarationNode declarationNode);
-
         void Visit(TypeNode typeNode);
-
-        T Visit<T>(CompoundNode compoundNode);
-
-        T Visit<T>(AssignmentNode assignmentNode);
     }
 
-    public interface IExpression
+    public interface IEvaluator<T>
     {
-        T Accept<T>(IVisitor visitor);
-    }
+        T Evaluate(NumberNode node);
 
-    public interface IStatement
-    {
-        void Accept(IVisitor visitor);
+        T Evaluate(VariableNode node);
+
+        T Evaluate(UnaryOperationNode node);
+
+        T Evaluate(BinaryOperationNode node);
+
+        T Evaluate(TypeNode node);
+
+        T Evaluate(NoOpNode noOpNode);
+
+        T Evaluate(ProgramNode programNode);
+
+        T Evaluate(BlockNode blockNode);
+
+        T Evaluate(DeclarationNode declarationNode);
+
+        T Evaluate(CompoundNode compoundNode);
+
+        T Evaluate(AssignmentNode assignmentNode);
     }
 }

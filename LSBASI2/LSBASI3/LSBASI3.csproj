@@ -52,6 +52,7 @@
     <Compile Include="Symbol.cs" />
     <Compile Include="SymbolTable.cs" />
     <Compile Include="Token.cs" />
+    <Compile Include="TypedValue.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

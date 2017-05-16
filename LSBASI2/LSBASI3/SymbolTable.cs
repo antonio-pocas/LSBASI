@@ -93,73 +93,18 @@ namespace LSBASI3
         public void Visit(TypeNode typeNode)
         {
         }
-
-        public T Visit<T>(ProgramNode programNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public T Visit<T>(BlockNode blockNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public T Visit<T>(DeclarationNode declarationNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public T Visit<T>(CompoundNode compoundNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public T Visit<T>(AssignmentNode assignmentNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public T Visit<T>(TypeNode node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public T Visit<T>(NoOpNode noOpNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public T Visit<T>(NumberNode node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public T Visit<T>(VariableNode node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public T Visit<T>(UnaryOperationNode node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public T Visit<T>(BinaryOperationNode node)
-        {
-            throw new NotImplementedException();
-        }
     }
 
     public class SymbolTable
     {
-        private Dictionary<string, Symbol> table;
+        private readonly Dictionary<string, Symbol> table;
 
         public SymbolTable()
         {
             table = new Dictionary<string, Symbol>
             {
-                {"REAL", new BuiltinTypeSymbol("REAL")},
-                {"INTEGER", new BuiltinTypeSymbol("INTEGER")}
+                {RealSymbol.Keyword, RealSymbol.Instance},
+                {IntegerSymbol.Keyword, IntegerSymbol.Instance}
             };
         }
 

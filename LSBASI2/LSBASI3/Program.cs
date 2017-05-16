@@ -36,10 +36,10 @@ END.  {Part10}";
 
             var lexer = new Lexer(x);
             var parser = new Parser(lexer);
-            //var interpreter = new Interpreter(parser);
-            var symbolTableBuilder = new SymbolTableBuilder();
-            var table = symbolTableBuilder.Build(parser.Parse());
-            //interpreter.Evaluate();
+            var interpreter = new Interpreter(parser, new SymbolTableBuilder());
+            //var symbolTableBuilder = new SymbolTableBuilder();
+            //var table = symbolTableBuilder.Build(parser.Parse());
+            interpreter.Interpret();
 
             //Console.WriteLine(y);
             Console.ReadLine();
