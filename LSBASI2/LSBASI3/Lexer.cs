@@ -10,16 +10,25 @@ namespace LSBASI3
         private readonly string Input;
         private int Position;
 
-        private readonly Dictionary<string, Token> ReservedKeywords = new Dictionary<string, Token>()
+        private static readonly Dictionary<string, Token> ReservedKeywords;
+
+        static Lexer()
         {
-            { "PROGRAM".ToLowerInvariant(), Token.Program() },
-            { "VAR".ToLowerInvariant(), Token.Var() },
-            { "INTEGER".ToLowerInvariant(), Token.Integer() },
-            { "REAL".ToLowerInvariant(), Token.Real() },
-            { "BEGIN".ToLowerInvariant(), Token.Begin() },
-            { "END".ToLowerInvariant(), Token.End() },
-            { "div".ToLowerInvariant(), Token.IntegerDivision() },
-        };
+            ReservedKeywords = new Dictionary<string, Token>();
+            AddKeyword(Token.Program());
+            AddKeyword(Token.Procedure());
+            AddKeyword(Token.Var());
+            AddKeyword(Token.Integer());
+            AddKeyword(Token.Real());
+            AddKeyword(Token.Begin());
+            AddKeyword(Token.End());
+            AddKeyword(Token.IntegerDivision());
+        }
+
+        private static void AddKeyword(Token keyword)
+        {
+            ReservedKeywords.Add(keyword.Value.ToLowerInvariant(), keyword);
+        }
 
         public Lexer(string input)
         {

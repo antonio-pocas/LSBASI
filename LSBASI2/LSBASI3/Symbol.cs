@@ -119,7 +119,7 @@ namespace LSBASI3
 
         public override bool CanCastTo(TypeSymbol type)
         {
-            return type == RealSymbol.Instance;
+            return type == BuiltinType.Real;
         }
     }
 
@@ -171,7 +171,7 @@ namespace LSBASI3
         {
             ValidateCastOrThrowException(from.Type);
 
-            return new TypedValue(Instance, Convert.ToDouble(from.Value));
+            return new TypedValue(BuiltinType.Real, Convert.ToDouble(from.Value));
         }
 
         public override bool CanCastTo(TypeSymbol type)
@@ -200,5 +200,11 @@ namespace LSBASI3
         public VarSymbol(string name, TypeSymbol type) : base(name, type)
         {
         }
+    }
+
+    public static class BuiltinType
+    {
+        public static IntegerSymbol Integer => IntegerSymbol.Instance;
+        public static RealSymbol Real => RealSymbol.Instance;
     }
 }

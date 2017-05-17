@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.SqlServer.Server;
 
 namespace LSBASI3
 {
@@ -8,7 +9,8 @@ namespace LSBASI3
     /// Grammar:
     /// Program:                    PROGRAM Variable SEMI Block DOT
     /// Block:                      Declarations CompoundStatement
-    /// Declarations:               VAR (VariableDeclaration SEMI)+ | EmptyRule
+    /// Declarations:               VAR (VariableDeclaration SEMI)+ | (Procedure)* | EmptyRule
+    /// Procedure:                  PROCEDURE ID SEMI Block SEMI
     /// VariableDeclaration:        ID (COMMA ID)* COLON TypeSpecification
     /// TypeSpecification:          INTEGER | REAL
     /// CompoundStatement:          BEGIN StatementList END
@@ -97,7 +99,24 @@ namespace LSBASI3
                 Eat(TokenType.Semicolon);
             }
 
+            while (CurrentToken.Type == TokenType.Procedure)
+            {
+                var procedure = Procedure();
+                declarations.Add(procedure);
+            }
+
             return declarations;
+        }
+
+        private ProcedureNode Procedure()
+        {
+            Eat(TokenType.Procedure);
+            var name = CurrentToken.Value;
+            Eat(TokenType.Id);
+            Eat(TokenType.Semicolon);
+            var block = Block();
+            Eat(TokenType.Semicolon);
+            return new ProcedureNode(name, block);
         }
 
         private List<DeclarationNode> VariableDeclaration()

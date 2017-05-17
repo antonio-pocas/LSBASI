@@ -13,11 +13,11 @@ namespace LSBASI3
         private readonly SymbolTable symbolTable;
         private readonly Dictionary<string, TypedValue> globalMemory;
 
-        public Interpreter(Parser parser, SymbolTableBuilder symbolTableBuilder)
+        public Interpreter(Parser parser, SemanticAnalyzer semanticAnalyzer)
         {
             var node = parser.Parse();
             this.rootNode = node;
-            this.symbolTable = symbolTableBuilder.Build(node);
+            this.symbolTable = semanticAnalyzer.Analyze(node);
             this.globalMemory = new Dictionary<string, TypedValue>();
         }
 
@@ -26,95 +26,6 @@ namespace LSBASI3
             this.rootNode.Accept(this);
         }
 
-        //    public int Visit(UnaryOperationNode node)
-        //    {
-        //        switch (node.Type)
-        //        {
-        //            case UnaryOperationType.Plus:
-        //                return +node.Child.Accept<int>(this);
-
-        //            case UnaryOperationType.Minus:
-        //                return -node.Child.Accept<int>(this);
-        //        }
-
-        //        throw new Exception();
-        //    }
-
-        //    void IVisitor.Visit(NoOpNode node)
-        //    {
-        //    }
-
-        //    void IVisitor.Visit(AssignmentNode assignmentNode)
-        //    {
-        //        SymbolTable[assignmentNode.Variable.Name] = assignmentNode.Result.Accept<int>(this);
-        //    }
-
-        //    T IVisitor.Visit<T>(VariableNode node)
-        //    {
-        //        object value;
-        //        if (!SymbolTable.TryGetValue(node.Name, out value))
-        //        {
-        //            throw new InvalidOperationException($"Unassigned variable {node.Name}");
-        //        }
-        //        return (T)value;
-        //    }
-
-        //    void IVisitor.Visit(CompoundNode node)
-        //    {
-        //        foreach (var child in node.Children)
-        //        {
-        //            child.Accept(this);
-        //        }
-        //    }
-
-        //    T IVisitor.Visit<T>(BinaryOperationNode node)
-        //    {
-        //switch (node.Type)
-        //{
-        //    case BinaryOperationType.Add:
-        //        return node.Left.Accept<T>(this) + node.Right.Accept<T>(this);
-
-        //    case BinaryOperationType.Subtract:
-        //        return node.Left.Accept<T>(this) - node.Right.Accept<T>(this);
-
-        //    case BinaryOperationType.Multiply:
-        //        return node.Left.Accept<T>(this) * node.Right.Accept<T>(this);
-
-        //    case BinaryOperationType.Divide:
-        //        return node.Left.Accept<T>(this) / node.Right.Accept<T>(this);
-        //}
-
-        //        throw new Exception();
-        //    }
-
-        //    public void Visit(ProgramNode node)
-        //    {
-        //        node.Block.Accept(this);
-        //    }
-
-        //    public void Visit(BlockNode node)
-        //    {
-        //        foreach (var declaration in node.Declarations)
-        //        {
-        //            declaration.Accept(this);
-        //        }
-
-        //        node.Compound.Accept(this);
-        //    }
-
-        //    public void Visit(DeclarationNode node)
-        //    {
-        //    }
-
-        //    public int Visit(TypeNode node)
-        //    {
-        //    }
-
-        //    int IVisitor.Visit(NumberNode node)
-        //    {
-        //        return node.Value;
-        //    }
-        //}
         public void Visit(CompoundNode node)
         {
             foreach (var child in node.Children)
@@ -190,16 +101,20 @@ namespace LSBASI3
             throw new NotImplementedException();
         }
 
+        public void Visit(ProcedureNode node)
+        {
+        }
+
         public TypedValue Evaluate(NumberNode node)
         {
             if (node.token.Type == TokenType.IntegerConstant)
             {
-                return new TypedValue(IntegerSymbol.Instance, int.Parse(node.Value));
+                return new TypedValue(BuiltinType.Integer, int.Parse(node.Value));
             }
 
             if (node.token.Type == TokenType.RealConstant)
             {
-                return new TypedValue(RealSymbol.Instance, double.Parse(node.Value, CultureInfo.InvariantCulture));
+                return new TypedValue(BuiltinType.Real, double.Parse(node.Value, CultureInfo.InvariantCulture));
             }
 
             throw new Exception("Unsupported type for number node");
@@ -221,19 +136,24 @@ namespace LSBASI3
         public TypedValue Evaluate(UnaryOperationNode node)
         {
             var value = node.Child.Yield(this);
-            var numberType = value.Type as NumberTypeSymbol;
-            if (numberType == null)
+
+            NumberTypeSymbol type;
+            try
             {
-                throw new InvalidOperationException($"Unsupported type for operation {node.Type.ToString()}");
+                type = TypeChecker.CheckUnaryOperation(value.Type);
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException($"Unsupported value {value} for operation {node.Type.ToString()}");
             }
 
             switch (node.Type)
             {
                 case UnaryOperationType.Plus:
-                    return numberType.Plus(value);
+                    return type.Plus(value);
 
                 case UnaryOperationType.Minus:
-                    return numberType.Minus(value);
+                    return type.Minus(value);
             }
 
             throw new Exception();
@@ -244,15 +164,14 @@ namespace LSBASI3
             var leftValue = node.Left.Yield(this);
             var rightValue = node.Right.Yield(this);
 
-            var numberType = leftValue.Type as NumberTypeSymbol;
-            if (numberType == null)
+            NumberTypeSymbol numberType;
+            try
             {
-                throw new InvalidOperationException($"Unsupported type for operation {node.Type.ToString()}");
+                numberType = TypeChecker.CheckBinaryOperation(node.Type, leftValue.Type, rightValue.Type);
             }
-
-            if (numberType != rightValue.Type && numberType.CanCastTo(rightValue.Type))
+            catch (TypeAccessException ex)
             {
-                numberType = rightValue.Type as NumberTypeSymbol;
+                throw new InvalidOperationException($"Cannot perform operation {node.Type.ToString()} between value {leftValue} and {rightValue}", ex);
             }
 
             switch (node.Type)
@@ -267,15 +186,14 @@ namespace LSBASI3
                     return numberType.Multiply(leftValue, rightValue);
 
                 case BinaryOperationType.IntegerDivision:
-                    var integer = numberType as IntegerSymbol;
-                    if (integer == null)
+                    if (numberType != BuiltinType.Integer)
                     {
                         throw new InvalidOperationException($"Integer division may only be done on integers");
                     }
-                    return integer.Divide(leftValue, rightValue);
+                    return BuiltinType.Integer.Divide(leftValue, rightValue);
 
                 case BinaryOperationType.RealDivision:
-                    return RealSymbol.Instance.Divide(leftValue, rightValue);
+                    return BuiltinType.Real.Divide(leftValue, rightValue);
             }
 
             throw new Exception();
@@ -312,6 +230,11 @@ namespace LSBASI3
         }
 
         public TypedValue Evaluate(AssignmentNode assignmentNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public TypedValue Evaluate(ProcedureNode node)
         {
             throw new NotImplementedException();
         }

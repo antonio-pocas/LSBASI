@@ -41,7 +41,7 @@ namespace LSBASI3
     {
         public static TypedValue IntegerValue(object value)
         {
-            return new TypedValue(IntegerSymbol.Instance, value);
+            return new TypedValue(BuiltinType.Integer, value);
         }
 
         public static TypedValue Add(TypedValue left, TypedValue right)
@@ -95,7 +95,7 @@ namespace LSBASI3
     {
         public static TypedValue RealValue(object value)
         {
-            return new TypedValue(RealSymbol.Instance, value);
+            return new TypedValue(BuiltinType.Real, value);
         }
 
         public static TypedValue Add(TypedValue left, TypedValue right)
@@ -142,6 +142,55 @@ namespace LSBASI3
             var actual = Convert.ToDouble(value.Value);
 
             return RealValue(-actual);
+        }
+    }
+
+    public static class TypeChecker
+    {
+        public static NumberTypeSymbol CheckBinaryOperation(BinaryOperationType operation, TypeSymbol left, TypeSymbol right)
+        {
+            var leftAsNumber = left as NumberTypeSymbol;
+            var rightAsNumber = right as NumberTypeSymbol;
+
+            if (leftAsNumber == null || rightAsNumber == null)
+            {
+                throw new TypeAccessException($"Cannot perform operation {operation.ToString()} between types {left} and {right}");
+            }
+
+            if (operation == BinaryOperationType.IntegerDivision
+                && (leftAsNumber == BuiltinType.Real || rightAsNumber == BuiltinType.Real))
+            {
+                throw new TypeAccessException($"Cannot perform operation {BinaryOperationType.IntegerDivision.ToString()} between types {left} and {right}");
+            }
+
+            if (operation == BinaryOperationType.RealDivision)
+            {
+                return BuiltinType.Real;
+            }
+
+            if (leftAsNumber == rightAsNumber || rightAsNumber.CanCastTo(leftAsNumber))
+            {
+                return leftAsNumber;
+            }
+
+            if (leftAsNumber.CanCastTo(rightAsNumber))
+            {
+                return rightAsNumber;
+            }
+
+            throw new TypeAccessException($"Cannot perform operation {operation.ToString()} between types {left} and {right}");
+        }
+
+        public static NumberTypeSymbol CheckUnaryOperation(TypeSymbol type)
+        {
+            var numberType = type as NumberTypeSymbol;
+
+            if (numberType == null)
+            {
+                throw new TypeAccessException($"Cannot perform a unary operation on the type {type}");
+            }
+
+            return numberType;
         }
     }
 }

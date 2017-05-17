@@ -26,6 +26,11 @@
             return new Token(TokenType.Program, "PROGRAM");
         }
 
+        public static Token Procedure()
+        {
+            return new Token(TokenType.Procedure, "PROCEDURE");
+        }
+
         public static Token Var()
         {
             return new Token(TokenType.Var, "VAR");
@@ -130,6 +135,7 @@
     public enum TokenType
     {
         Program,
+        Procedure,
         Var,
         Colon,
         Comma,
