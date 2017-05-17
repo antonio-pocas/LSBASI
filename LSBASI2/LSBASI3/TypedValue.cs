@@ -39,12 +39,17 @@ namespace LSBASI3
 
     public static class IntegerOperations
     {
+        public static TypedValue IntegerValue(object value)
+        {
+            return new TypedValue(IntegerSymbol.Instance, value);
+        }
+
         public static TypedValue Add(TypedValue left, TypedValue right)
         {
             var leftValue = Convert.ToInt32(left.Value);
             var rightValue = Convert.ToInt32(right.Value);
 
-            return new TypedValue(left.Type, leftValue + rightValue);
+            return IntegerValue(leftValue + rightValue);
         }
 
         public static TypedValue Subtract(TypedValue left, TypedValue right)
@@ -52,7 +57,7 @@ namespace LSBASI3
             var leftValue = Convert.ToInt32(left.Value);
             var rightValue = Convert.ToInt32(right.Value);
 
-            return new TypedValue(left.Type, leftValue - rightValue);
+            return IntegerValue(leftValue - rightValue);
         }
 
         public static TypedValue Divide(TypedValue left, TypedValue right)
@@ -60,7 +65,7 @@ namespace LSBASI3
             var leftValue = Convert.ToInt32(left.Value);
             var rightValue = Convert.ToInt32(right.Value);
 
-            return new TypedValue(left.Type, leftValue / rightValue);
+            return IntegerValue(leftValue / rightValue);
         }
 
         public static TypedValue Multiply(TypedValue left, TypedValue right)
@@ -68,32 +73,37 @@ namespace LSBASI3
             var leftValue = Convert.ToInt32(left.Value);
             var rightValue = Convert.ToInt32(right.Value);
 
-            return new TypedValue(left.Type, leftValue * rightValue);
+            return IntegerValue(leftValue * rightValue);
         }
 
         public static TypedValue Plus(TypedValue value)
         {
             var actual = Convert.ToInt32(value.Value);
 
-            return new TypedValue(value.Type, +actual);
+            return IntegerValue(+actual);
         }
 
         public static TypedValue Minus(TypedValue value)
         {
             var actual = Convert.ToInt32(value.Value);
 
-            return new TypedValue(value.Type, -actual);
+            return IntegerValue(-actual);
         }
     }
 
     public static class RealOperations
     {
+        public static TypedValue RealValue(object value)
+        {
+            return new TypedValue(RealSymbol.Instance, value);
+        }
+
         public static TypedValue Add(TypedValue left, TypedValue right)
         {
             var leftValue = Convert.ToDouble(left.Value);
             var rightValue = Convert.ToDouble(right.Value);
 
-            return new TypedValue(left.Type, leftValue + rightValue);
+            return RealValue(leftValue + rightValue);
         }
 
         public static TypedValue Subtract(TypedValue left, TypedValue right)
@@ -101,7 +111,7 @@ namespace LSBASI3
             var leftValue = Convert.ToDouble(left.Value);
             var rightValue = Convert.ToDouble(right.Value);
 
-            return new TypedValue(left.Type, leftValue - rightValue);
+            return RealValue(leftValue - rightValue);
         }
 
         public static TypedValue Divide(TypedValue left, TypedValue right)
@@ -109,7 +119,7 @@ namespace LSBASI3
             var leftValue = Convert.ToDouble(left.Value);
             var rightValue = Convert.ToDouble(right.Value);
 
-            return new TypedValue(left.Type, leftValue / rightValue);
+            return RealValue(leftValue / rightValue);
         }
 
         public static TypedValue Multiply(TypedValue left, TypedValue right)
@@ -117,21 +127,21 @@ namespace LSBASI3
             var leftValue = Convert.ToDouble(left.Value);
             var rightValue = Convert.ToDouble(right.Value);
 
-            return new TypedValue(left.Type, leftValue * rightValue);
+            return RealValue(leftValue * rightValue);
         }
 
         public static TypedValue Plus(TypedValue value)
         {
             var actual = Convert.ToDouble(value.Value);
 
-            return new TypedValue(value.Type, +actual);
+            return RealValue(+actual);
         }
 
         public static TypedValue Minus(TypedValue value)
         {
             var actual = Convert.ToDouble(value.Value);
 
-            return new TypedValue(value.Type, -actual);
+            return RealValue(-actual);
         }
     }
 }
