@@ -17,15 +17,19 @@ namespace LSBASI3
    procedure Alpha(a : integer);
       var y : integer;
    begin
-      x := a + x + y;
+      x := b + x + y; { ERROR here! }
    end;
 
 begin { Main }
-
+    y := 2 div lol + 4 / 0;
+    aaa := zzz + 1 / 2;
 end.  { Main }";
 
             var lexer = new Lexer(x);
             var parser = new Parser(lexer);
+            var node = new Parser(new Lexer(x)).Parse();
+            var translator = new CSharpTranslator(node);
+            var text = translator.Translate();
             var interpreter = new Interpreter(parser, new SemanticAnalyzer());
             interpreter.Interpret();
 

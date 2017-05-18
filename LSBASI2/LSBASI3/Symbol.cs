@@ -19,6 +19,18 @@ namespace LSBASI3
         {
             return Name;
         }
+
+        public static Symbol Program(string name)
+        {
+            return new ProgramSymbol(name);
+        }
+
+        private class ProgramSymbol : Symbol
+        {
+            public ProgramSymbol(string name) : base(name)
+            {
+            }
+        }
     }
 
     public abstract class TypeSymbol : Symbol
@@ -199,6 +211,16 @@ namespace LSBASI3
     {
         public VarSymbol(string name, TypeSymbol type) : base(name, type)
         {
+        }
+    }
+
+    public class ProcedureSymbol : Symbol
+    {
+        public List<VarSymbol> Parameters { get; set; }
+
+        public ProcedureSymbol(string name, List<VarSymbol> parameters) : base(name)
+        {
+            Parameters = parameters;
         }
     }
 

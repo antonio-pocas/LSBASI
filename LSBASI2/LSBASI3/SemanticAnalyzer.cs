@@ -1,56 +1,55 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 
 namespace LSBASI3
 {
     public class SemanticAnalyzer : IVisitor, IEvaluator<TypeSymbol>
     {
-        private SymbolTable table;
+        private ScopedSymbolTable currentScope;
 
         public SemanticAnalyzer()
         {
-            this.table = new SymbolTable();
         }
 
-        public SymbolTable Analyze(ProgramNode program)
+        public ScopedSymbolTable Analyze(ProgramNode program)
         {
             program.Accept(this);
-            var ret = table;
-            table = new SymbolTable();
-            return ret;
-        }
 
-        public void Visit(CompoundNode node)
-        {
-            foreach (var child in node.Children)
-            {
-                child.Accept(this);
-            }
-        }
-
-        public void Visit(NoOpNode node)
-        {
-        }
-
-        public void Visit(AssignmentNode node)
-        {
-            var name = node.Variable.Name;
-            var symbol = table.Lookup<VarSymbol>(name);
-            if (symbol == null)
-            {
-                throw new Exception($"Assignment of uninitialized variable {name}");
-            }
-
-            var valueType = node.Result.Yield(this);
-
-            if (valueType != symbol.Type && !valueType.CanCastTo(symbol.Type))
-            {
-                throw new TypeAccessException($"Cannot assign value of type {valueType} to variable {name} of type {symbol.Type}");
-            }
+            return currentScope;
         }
 
         public void Visit(ProgramNode node)
         {
+            var programScope = ScopedSymbolTable.CreateProgramScope(node.Name);
+            currentScope = new ScopedSymbolTable("Global", 1, programScope);
             node.Block.Accept(this);
+
+            currentScope = currentScope.EnclosingScope;
+        }
+
+        public void Visit(ProcedureNode node)
+        {
+            var name = node.Name;
+
+            currentScope = new ScopedSymbolTable(name, currentScope.Level + 1, currentScope);
+            var formalParameters = new List<VarSymbol>();
+
+            foreach (var parameter in node.FormalParameters)
+            {
+                var parameterSymbol = new VarSymbol(parameter.Variable.Name, currentScope.Lookup<TypeSymbol>(parameter.Type.Value));
+                formalParameters.Add(parameterSymbol);
+                currentScope.Define(parameterSymbol);
+            }
+
+            node.Block.Accept(this);
+
+            currentScope = currentScope.EnclosingScope;
+        }
+
+        public void Visit(ParameterNode node)
+        {
         }
 
         public void Visit(BlockNode node)
@@ -64,16 +63,45 @@ namespace LSBASI3
 
         public void Visit(DeclarationNode node)
         {
-            var symbol = new VarSymbol(node.Variable.Name, table.Lookup<BuiltinTypeSymbol>(node.Type.Value));
-            this.table.Define(symbol);
+            var symbol = new VarSymbol(node.Variable.Name, currentScope.Lookup<BuiltinTypeSymbol>(node.Type.Value));
+            this.currentScope.Define(symbol);
+        }
+
+        public void Visit(CompoundNode node)
+        {
+            foreach (var child in node.Children)
+            {
+                child.Accept(this);
+            }
         }
 
         public void Visit(VariableNode variableNode)
         {
             var name = variableNode.Name;
-            if (table.Lookup<VarSymbol>(name) == null)
+            if (currentScope.Lookup<VarSymbol>(name) == null)
             {
                 throw new Exception($"Use of uninitialized variable {name}");
+            }
+        }
+
+        public void Visit(NoOpNode node)
+        {
+        }
+
+        public void Visit(AssignmentNode node)
+        {
+            var name = node.Variable.Name;
+            var symbol = currentScope.Lookup<VarSymbol>(name);
+            if (symbol == null)
+            {
+                throw new Exception($"Assignment of uninitialized variable {name}");
+            }
+
+            var valueType = node.Result.Yield(this);
+
+            if (valueType != symbol.Type && !valueType.CanCastTo(symbol.Type))
+            {
+                throw new TypeAccessException($"Cannot assign value of type {valueType} to variable {name} of type {symbol.Type}");
             }
         }
 
@@ -96,15 +124,6 @@ namespace LSBASI3
         {
         }
 
-        public void Visit(ProcedureNode node)
-        {
-        }
-
-        public void Visit(ParameterNode node)
-        {
-            throw new NotImplementedException();
-        }
-
         public TypeSymbol Evaluate(NumberNode node)
         {
             if (node.token.Type == TokenType.IntegerConstant)
@@ -122,7 +141,7 @@ namespace LSBASI3
 
         public TypeSymbol Evaluate(VariableNode node)
         {
-            var variable = table.Lookup<TypedSymbol>(node.Name);
+            var variable = currentScope.Lookup<TypedSymbol>(node.Name);
             if (variable == null)
             {
                 throw new TypeAccessException($"Use of undeclared variable {node.Name}");

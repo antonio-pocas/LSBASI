@@ -10,14 +10,14 @@ namespace LSBASI3
     public class Interpreter : IVisitor, IEvaluator<TypedValue>
     {
         private readonly AstNode rootNode;
-        private readonly SymbolTable symbolTable;
+        private readonly ScopedSymbolTable scopedSymbolTable;
         private readonly Dictionary<string, TypedValue> globalMemory;
 
         public Interpreter(Parser parser, SemanticAnalyzer semanticAnalyzer)
         {
             var node = parser.Parse();
             this.rootNode = node;
-            this.symbolTable = semanticAnalyzer.Analyze(node);
+            this.scopedSymbolTable = semanticAnalyzer.Analyze(node);
             this.globalMemory = new Dictionary<string, TypedValue>();
         }
 
@@ -42,7 +42,7 @@ namespace LSBASI3
         {
             var name = node.Variable.Name;
             var result = node.Result.Yield(this);
-            var symbol = symbolTable.Lookup<TypedSymbol>(name);
+            var symbol = scopedSymbolTable.Lookup<TypedSymbol>(name);
 
             if (symbol.Type != result.Type)
             {
