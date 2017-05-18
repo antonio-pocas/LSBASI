@@ -94,12 +94,36 @@ namespace LSBASI3
     public class ProcedureNode : AstNode
     {
         public string Name { get; set; }
+        public List<ParameterNode> FormalParameters { get; set; }
         public BlockNode Block { get; set; }
 
-        public ProcedureNode(string name, BlockNode block)
+        public ProcedureNode(string name, List<ParameterNode> formalParameters, BlockNode block)
         {
             Name = name;
             Block = block;
+            FormalParameters = formalParameters;
+        }
+
+        public override void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        public override T Yield<T>(IEvaluator<T> evaluator)
+        {
+            return evaluator.Evaluate(this);
+        }
+    }
+
+    public class ParameterNode : AstNode
+    {
+        public VariableNode Variable { get; set; }
+        public TypeNode Type { get; set; }
+
+        public ParameterNode(VariableNode variable, TypeNode type)
+        {
+            Variable = variable;
+            Type = type;
         }
 
         public override void Accept(IVisitor visitor)
@@ -344,6 +368,8 @@ namespace LSBASI3
         void Visit(TypeNode typeNode);
 
         void Visit(ProcedureNode node);
+
+        void Visit(ParameterNode node);
     }
 
     public interface IEvaluator<T>
@@ -371,5 +397,7 @@ namespace LSBASI3
         T Evaluate(AssignmentNode assignmentNode);
 
         T Evaluate(ProcedureNode node);
+
+        T Evaluate(ParameterNode node);
     }
 }

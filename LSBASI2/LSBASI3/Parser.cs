@@ -10,7 +10,9 @@ namespace LSBASI3
     /// Program:                    PROGRAM Variable SEMI Block DOT
     /// Block:                      Declarations CompoundStatement
     /// Declarations:               VAR (VariableDeclaration SEMI)+ | (Procedure)* | EmptyRule
-    /// Procedure:                  PROCEDURE ID SEMI Block SEMI
+    /// Procedure:                  PROCEDURE ID SEMI (LPAREN FormalParameterList RPAREN)? Block SEMI
+    /// FormalParameterList:        FormalParameters | FormalParameters SEMI FormalParameterList
+    /// FormalParameters:           ID (COMMA ID)* COLON TypeSpecification
     /// VariableDeclaration:        ID (COMMA ID)* COLON TypeSpecification
     /// TypeSpecification:          INTEGER | REAL
     /// CompoundStatement:          BEGIN StatementList END
@@ -113,10 +115,49 @@ namespace LSBASI3
             Eat(TokenType.Procedure);
             var name = CurrentToken.Value;
             Eat(TokenType.Id);
+            var parameters = new List<ParameterNode>();
+            if (CurrentToken.Type == TokenType.LeftParen)
+            {
+                Eat(TokenType.LeftParen);
+                while (CurrentToken.Type == TokenType.Id)
+                {
+                    parameters = FormalParameterList();
+                }
+                Eat(TokenType.RightParen);
+            }
             Eat(TokenType.Semicolon);
             var block = Block();
             Eat(TokenType.Semicolon);
-            return new ProcedureNode(name, block);
+            return new ProcedureNode(name, parameters, block);
+        }
+
+        private List<ParameterNode> FormalParameterList()
+        {
+            var parameters = new List<ParameterNode>();
+
+            while (CurrentToken.Type == TokenType.Id)
+            {
+                parameters.AddRange(FormalParameters());
+            }
+
+            return parameters;
+        }
+
+        private List<ParameterNode> FormalParameters()
+        {
+            var variables = new List<VariableNode>() { new VariableNode(CurrentToken) };
+            Eat(TokenType.Id);
+
+            while (CurrentToken.Type == TokenType.Comma)
+            {
+                Eat(TokenType.Comma);
+                variables.Add(new VariableNode(CurrentToken));
+                Eat(TokenType.Id);
+            }
+
+            Eat(TokenType.Colon);
+            var type = TypeSpecification();
+            return variables.Select(x => new ParameterNode(x, type)).ToList();
         }
 
         private List<DeclarationNode> VariableDeclaration()

@@ -17,20 +17,6 @@ namespace LSBASI3
             Value = value;
         }
 
-        public TypedValue BinaryOperation(TypedValue other, Func<TypedValue, TypedValue, TypedValue> operation)
-        {
-            if (this.Type != other.Type)
-            {
-                throw new TypeAccessException($"Cannot perform operation between values of different types: {this.Type} and {other.Type}");
-            }
-            return operation(this, other);
-        }
-
-        public TypedValue UnaryOperation(Func<TypedValue, TypedValue> operation)
-        {
-            return operation(this);
-        }
-
         public override string ToString()
         {
             return $"{Value} : {Type}";
