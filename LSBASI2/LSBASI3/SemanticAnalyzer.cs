@@ -33,7 +33,8 @@ namespace LSBASI3
         {
             var name = node.Name;
 
-            currentScope = new ScopedSymbolTable(name, currentScope.Level + 1, currentScope);
+            var procedureScope = new ScopedSymbolTable(name, currentScope.Level + 1, currentScope);
+            currentScope = procedureScope;
             var formalParameters = new List<VarSymbol>();
 
             foreach (var parameter in node.FormalParameters)
@@ -46,6 +47,7 @@ namespace LSBASI3
             node.Block.Accept(this);
 
             currentScope = currentScope.EnclosingScope;
+            currentScope.Define(new ProcedureSymbol(name, formalParameters, procedureScope, node));
         }
 
         public void Visit(ParameterNode node)
@@ -80,7 +82,7 @@ namespace LSBASI3
             var name = variableNode.Name;
             if (currentScope.Lookup<VarSymbol>(name) == null)
             {
-                throw new Exception($"Use of uninitialized variable {name}");
+                throw new Exception($"Use of undeclared variable {name}");
             }
         }
 
@@ -91,17 +93,18 @@ namespace LSBASI3
         public void Visit(AssignmentNode node)
         {
             var name = node.Variable.Name;
-            var symbol = currentScope.Lookup<VarSymbol>(name);
-            if (symbol == null)
+            var variable = currentScope.Lookup<VarSymbol>(name);
+            if (variable == null)
             {
-                throw new Exception($"Assignment of uninitialized variable {name}");
+                throw new Exception($"Use of undeclared variable {name}");
             }
 
             var valueType = node.Result.Yield(this);
 
-            if (valueType != symbol.Type && !valueType.CanCastTo(symbol.Type))
+            if (valueType != variable.Type && !valueType.CanCastTo(variable.Type))
             {
-                throw new TypeAccessException($"Cannot assign value of type {valueType} to variable {name} of type {symbol.Type}");
+                throw new TypeAccessException(
+                    $"Cannot assign value of type {valueType} to variable {variable}");
             }
         }
 

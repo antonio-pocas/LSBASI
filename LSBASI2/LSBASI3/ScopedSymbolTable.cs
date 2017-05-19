@@ -62,7 +62,7 @@ namespace LSBASI3
             Symbol symbol;
             if (!table.TryGetValue(name, out symbol) && EnclosingScope != null)
             {
-                symbol = EnclosingScope.Lookup<T>(name);
+                symbol = EnclosingScope.Lookup(name);
             }
             return symbol as T;
         }

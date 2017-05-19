@@ -126,7 +126,7 @@ namespace LSBASI3
         {
             ValidateCastOrThrowException(from.Type);
 
-            return new TypedValue(Instance, (int)from.Value);
+            return new TypedValue(Instance, Convert.ToInt32(from.Value));
         }
 
         public override bool CanCastTo(TypeSymbol type)
@@ -217,10 +217,14 @@ namespace LSBASI3
     public class ProcedureSymbol : Symbol
     {
         public List<VarSymbol> Parameters { get; set; }
+        public ScopedSymbolTable Scope { get; set; }
+        public ProcedureNode ProcedureReference { get; set; }
 
-        public ProcedureSymbol(string name, List<VarSymbol> parameters) : base(name)
+        public ProcedureSymbol(string name, List<VarSymbol> parameters, ScopedSymbolTable scope, ProcedureNode procedure) : base(name)
         {
             Parameters = parameters;
+            Scope = scope;
+            ProcedureReference = procedure;
         }
     }
 

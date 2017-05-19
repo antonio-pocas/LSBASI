@@ -17,12 +17,13 @@ namespace LSBASI3
    procedure Alpha(a : integer);
       var y : integer;
    begin
-      x := b + x + y; { ERROR here! }
+      y := a + 2;
+      x :=  x + y; { ERROR here! }
    end;
 
 begin { Main }
-    y := 2 div lol + 4 / 0;
-    aaa := zzz + 1 / 2;
+    y := 2 + 40;
+    Alpha(3);
 end.  { Main }";
 
             var lexer = new Lexer(x);

@@ -11,50 +11,19 @@ namespace LSBASI3
     {
         private readonly AstNode rootNode;
         private readonly ScopedSymbolTable scopedSymbolTable;
-        private readonly Dictionary<string, TypedValue> globalMemory;
+        private readonly ScopedMemory scopedMemory;
 
         public Interpreter(Parser parser, SemanticAnalyzer semanticAnalyzer)
         {
             var node = parser.Parse();
             this.rootNode = node;
             this.scopedSymbolTable = semanticAnalyzer.Analyze(node);
-            this.globalMemory = new Dictionary<string, TypedValue>();
+            this.scopedMemory = ScopedMemory.ProgramMemory(node.Name);
         }
 
         public void Interpret()
         {
             this.rootNode.Accept(this);
-        }
-
-        public void Visit(CompoundNode node)
-        {
-            foreach (var child in node.Children)
-            {
-                child.Accept(this);
-            }
-        }
-
-        public void Visit(NoOpNode node)
-        {
-        }
-
-        public void Visit(AssignmentNode node)
-        {
-            var name = node.Variable.Name;
-            var result = node.Result.Yield(this);
-            var symbol = scopedSymbolTable.Lookup<TypedSymbol>(name);
-
-            if (symbol.Type != result.Type)
-            {
-                if (!result.Type.CanCastTo(symbol.Type))
-                {
-                    throw new TypeAccessException(
-                        $"Cannot assign value of type {result.Type} to variable of type {symbol.Type} ({name})");
-                }
-                result = symbol.Type.Cast(result);
-            }
-
-            globalMemory[node.Variable.Name] = result;
         }
 
         public void Visit(ProgramNode node)
@@ -74,6 +43,37 @@ namespace LSBASI3
 
         public void Visit(DeclarationNode node)
         {
+        }
+
+        public void Visit(CompoundNode node)
+        {
+            foreach (var child in node.Children)
+            {
+                child.Accept(this);
+            }
+        }
+
+        public void Visit(NoOpNode node)
+        {
+        }
+
+        public void Visit(AssignmentNode node)
+        {
+            var name = node.Variable.Name;
+            var result = node.Result.Yield(this);
+            var variable = scopedSymbolTable.Lookup<TypedSymbol>(name);
+
+            if (variable.Type != result.Type)
+            {
+                if (!result.Type.CanCastTo(variable.Type))
+                {
+                    throw new TypeAccessException(
+                        $"Cannot assign value of type {result.Type} to variable {variable}");
+                }
+                result = variable.Type.Cast(result);
+            }
+
+            scopedMemory[name] = result;
         }
 
         public void Visit(VariableNode variableNode)
@@ -128,11 +128,11 @@ namespace LSBASI3
         public TypedValue Evaluate(VariableNode node)
         {
             var name = node.Name;
+            var value = scopedMemory[name];
 
-            TypedValue value;
-            if (!globalMemory.TryGetValue(name, out value))
+            if (value == null)
             {
-                throw new Exception($"Unassigned variable {name}");
+                throw new Exception($"Use of unassigned variable {name}");
             }
 
             return value;

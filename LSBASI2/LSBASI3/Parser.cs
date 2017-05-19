@@ -9,7 +9,7 @@ namespace LSBASI3
     /// Grammar:
     /// Program:                    PROGRAM Variable SEMI Block DOT
     /// Block:                      Declarations CompoundStatement
-    /// Declarations:               VAR (VariableDeclaration SEMI)+ | (Procedure)* | EmptyRule
+    /// Declarations:               (VAR (VariableDeclaration SEMI)+)* | (Procedure)* | EmptyRule
     /// Procedure:                  PROCEDURE ID SEMI (LPAREN FormalParameterList RPAREN)? Block SEMI
     /// FormalParameterList:        FormalParameters | FormalParameters SEMI FormalParameterList
     /// FormalParameters:           ID (COMMA ID)* COLON TypeSpecification
@@ -87,18 +87,18 @@ namespace LSBASI3
 
         private List<AstNode> Declarations()
         {
-            if (CurrentToken.Type != TokenType.Var)
-            {
-                return new List<AstNode>() { EmptyRule() };
-            }
-
-            Eat(TokenType.Var);
             var declarations = new List<AstNode>();
-            while (CurrentToken.Type == TokenType.Id)
+
+            while (CurrentToken.Type == TokenType.Var)
             {
-                var declaration = VariableDeclaration();
-                declarations.AddRange(declaration);
-                Eat(TokenType.Semicolon);
+                Eat(TokenType.Var);
+
+                while (CurrentToken.Type == TokenType.Id)
+                {
+                    var declaration = VariableDeclaration();
+                    declarations.AddRange(declaration);
+                    Eat(TokenType.Semicolon);
+                }
             }
 
             while (CurrentToken.Type == TokenType.Procedure)
