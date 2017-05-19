@@ -17,7 +17,8 @@ namespace LSBASI3
     /// TypeSpecification:          INTEGER | REAL
     /// CompoundStatement:          BEGIN StatementList END
     /// StatementList:              Statement | Statement SEMI StatementList
-    /// Statement:                  CoumpoundStatement | AssignmentStatement | EmptyRule
+    /// Statement:                  CompoundStatement | AssignmentStatement | ProcedureStatement | EmptyRule
+    /// ProcedureStatement:         Variable (LPAREN (Expr)+ RPAREN)?
     /// AssignmentStatement:        Variable ASSIGN Expr
     /// EmptyRule:
     /// Expr:                       Term ((PLUS|MINUS) Term)*
@@ -38,22 +39,41 @@ namespace LSBASI3
         private readonly HashSet<TokenType> termOperationTokens = new HashSet<TokenType>() { TokenType.Star, TokenType.IntegerDivision, TokenType.Slash };
         private readonly HashSet<TokenType> exprOperationTokens = new HashSet<TokenType>() { TokenType.Plus, TokenType.Minus };
 
+        private bool lookahead;
+        private Token LookaheadToken;
+
         public Parser(Lexer lexer)
         {
             this.lexer = lexer;
             CurrentToken = lexer.GetNextToken();
+            lookahead = false;
         }
 
         private void Eat(TokenType type)
         {
             if (CurrentToken.Type == type)
             {
-                CurrentToken = lexer.GetNextToken();
+                if (lookahead)
+                {
+                    lookahead = false;
+                    CurrentToken = LookaheadToken;
+                }
+                else
+                {
+                    CurrentToken = lexer.GetNextToken();
+                }
             }
             else
             {
-                throw new InvalidOperationException("Parser error");
+                throw new InvalidOperationException($"Parser error, unexpected token. Expected {type.ToString()} got {CurrentToken.Type}");
             }
+        }
+
+        private Token Lookahead()
+        {
+            lookahead = true;
+            LookaheadToken = lexer.GetNextToken();
+            return LookaheadToken;
         }
 
         public ProgramNode Parse()
@@ -138,6 +158,10 @@ namespace LSBASI3
             while (CurrentToken.Type == TokenType.Id)
             {
                 parameters.AddRange(FormalParameters());
+                if (CurrentToken.Type == TokenType.Semicolon)
+                {
+                    Eat(TokenType.Semicolon);
+                }
             }
 
             return parameters;
@@ -224,10 +248,46 @@ namespace LSBASI3
 
             if (CurrentToken.Type == TokenType.Id)
             {
-                return AssignmentStatement();
+                var lookaheadToken = Lookahead();
+                if (lookaheadToken.Type == TokenType.Assign)
+                {
+                    return AssignmentStatement();
+                }
+
+                return ProcedureStatement();
             }
 
             return EmptyRule();
+        }
+
+        private ProcedureCallNode ProcedureStatement()
+        {
+            var name = Variable();
+            var arguments = new List<AstNode>();
+            if (CurrentToken.Type == TokenType.LeftParen)
+            {
+                Eat(TokenType.LeftParen);
+                while (CurrentToken.Type != TokenType.RightParen)
+                {
+                    var parameter = Expr();
+                    arguments.Add(parameter);
+
+                    if (CurrentToken.Type != TokenType.RightParen)
+                    {
+                        if (CurrentToken.Type == TokenType.Comma)
+                        {
+                            Eat(TokenType.Comma);
+                        }
+                        else
+                        {
+                            throw new Exception($"Unexpected token {CurrentToken} while parsing argument list of call to procedure {name}");
+                        }
+                    }
+                }
+                Eat(TokenType.RightParen);
+            }
+
+            return new ProcedureCallNode(name.Name, arguments);
         }
 
         private AssignmentNode AssignmentStatement()

@@ -54,6 +54,33 @@ namespace LSBASI3
         {
         }
 
+        public void Visit(ProcedureCallNode node)
+        {
+            var name = node.Name;
+            var procedure = currentScope.Lookup<ProcedureSymbol>(name);
+            if (procedure == null)
+            {
+                throw new MissingMethodException($"Use of undefined procedure {name}");
+            }
+
+            var parameters = procedure.Parameters;
+            var arguments = node.Arguments;
+            if (arguments.Count != parameters.Count)
+            {
+                throw new ArgumentException(
+                    $"Error in call to {name}, number of arguments ({arguments.Count}) differs from number of defined parameters ({parameters.Count})");
+            }
+
+            for (int i = 0; i < arguments.Count; i++)
+            {
+                var argumentType = arguments[i].Yield(this);
+                if (!TypeChecker.AreCompatible(parameters[i].Type, argumentType))
+                {
+                    throw new ArgumentException($"Error in call to {name}, cannot pass argument of type {argumentType} to parameter {parameters[i]}");
+                }
+            }
+        }
+
         public void Visit(BlockNode node)
         {
             foreach (var declaration in node.Declarations)
@@ -208,6 +235,11 @@ namespace LSBASI3
         }
 
         public TypeSymbol Evaluate(ParameterNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public TypeSymbol Evaluate(ProcedureCallNode node)
         {
             throw new NotImplementedException();
         }

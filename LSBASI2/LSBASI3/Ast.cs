@@ -137,6 +137,28 @@ namespace LSBASI3
         }
     }
 
+    public class ProcedureCallNode : AstNode
+    {
+        public string Name { get; set; }
+        public List<AstNode> Arguments { get; set; }
+
+        public ProcedureCallNode(string name, List<AstNode> arguments)
+        {
+            Name = name;
+            Arguments = arguments;
+        }
+
+        public override void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        public override T Yield<T>(IEvaluator<T> evaluator)
+        {
+            return evaluator.Evaluate(this);
+        }
+    }
+
     public class TypeNode : AstNode
     {
         public string Value { get; set; }
@@ -370,6 +392,8 @@ namespace LSBASI3
         void Visit(ProcedureNode node);
 
         void Visit(ParameterNode node);
+
+        void Visit(ProcedureCallNode node);
     }
 
     public interface IEvaluator<T>
@@ -399,5 +423,7 @@ namespace LSBASI3
         T Evaluate(ProcedureNode node);
 
         T Evaluate(ParameterNode node);
+
+        T Evaluate(ProcedureCallNode node);
     }
 }

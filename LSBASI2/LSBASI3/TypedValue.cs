@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -133,6 +134,16 @@ namespace LSBASI3
 
     public static class TypeChecker
     {
+        public static bool AreCompatible(TypeSymbol expected, TypeSymbol actual)
+        {
+            if (expected == actual || actual.CanCastTo(expected))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public static NumberTypeSymbol CheckBinaryOperation(BinaryOperationType operation, TypeSymbol left, TypeSymbol right)
         {
             var leftAsNumber = left as NumberTypeSymbol;

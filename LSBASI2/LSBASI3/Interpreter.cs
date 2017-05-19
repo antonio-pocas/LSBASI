@@ -110,6 +110,11 @@ namespace LSBASI3
             throw new NotImplementedException();
         }
 
+        public void Visit(ProcedureCallNode node)
+        {
+            throw new NotImplementedException();
+        }
+
         public TypedValue Evaluate(NumberNode node)
         {
             if (node.token.Type == TokenType.IntegerConstant)
@@ -245,6 +250,11 @@ namespace LSBASI3
         }
 
         public TypedValue Evaluate(ParameterNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public TypedValue Evaluate(ProcedureCallNode node)
         {
             throw new NotImplementedException();
         }

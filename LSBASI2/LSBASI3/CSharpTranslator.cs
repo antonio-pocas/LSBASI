@@ -110,6 +110,11 @@ namespace LSBASI3
             throw new NotImplementedException();
         }
 
+        public void Visit(ProcedureCallNode node)
+        {
+            throw new NotImplementedException();
+        }
+
         public void Visit(CompoundNode node)
         {
             foreach (var child in node.Children)
@@ -221,6 +226,11 @@ namespace LSBASI3
         }
 
         public string Evaluate(ParameterNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string Evaluate(ProcedureCallNode node)
         {
             throw new NotImplementedException();
         }
