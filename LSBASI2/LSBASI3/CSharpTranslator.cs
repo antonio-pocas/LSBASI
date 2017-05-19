@@ -68,7 +68,7 @@ namespace LSBASI3
 
             node.Compound.Accept(this);
 
-            if (currentLevel == 2)
+            if (currentLevel == 3)
             {
                 currentLevel--;
                 AppendIndented("}");
