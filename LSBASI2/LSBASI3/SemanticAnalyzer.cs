@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 
@@ -13,8 +12,9 @@ namespace LSBASI3
         {
         }
 
-        public ScopedSymbolTable Analyze(ProgramNode program)
+        public ScopedSymbolTable Analyze(ProgramNode program, ScopedSymbolTable globalScope)
         {
+            currentScope = globalScope;
             program.Accept(this);
 
             return currentScope;
@@ -22,7 +22,7 @@ namespace LSBASI3
 
         public void Visit(ProgramNode node)
         {
-            currentScope = ScopedSymbolTable.CreateProgramScope(node.Name);
+            currentScope = currentScope.Lookup<ProgramSymbol>(node.Name).Scope;
             node.Block.Accept(this);
 
             currentScope = currentScope.EnclosingScope;
@@ -32,21 +32,14 @@ namespace LSBASI3
         {
             var name = node.Name;
 
-            var procedureScope = new ScopedSymbolTable(name, currentScope.Level + 1, currentScope);
-            currentScope = procedureScope;
-            var formalParameters = new List<VarSymbol>();
+            var myScope = currentScope;
 
-            foreach (var parameter in node.FormalParameters)
-            {
-                var parameterSymbol = new VarSymbol(parameter.Variable.Name, currentScope.Lookup<TypeSymbol>(parameter.Type.Value));
-                formalParameters.Add(parameterSymbol);
-                currentScope.Define(parameterSymbol);
-            }
+            var procedureScope = currentScope.Lookup<ProcedureSymbol>(name).Scope;
+            currentScope = procedureScope;
 
             node.Block.Accept(this);
 
-            currentScope = currentScope.EnclosingScope;
-            currentScope.Define(new ProcedureSymbol(name, formalParameters, procedureScope, node));
+            currentScope = myScope;
         }
 
         public void Visit(ParameterNode node)
@@ -91,8 +84,6 @@ namespace LSBASI3
 
         public void Visit(DeclarationNode node)
         {
-            var symbol = new VarSymbol(node.Variable.Name, currentScope.Lookup<BuiltinTypeSymbol>(node.Type.Value));
-            this.currentScope.Define(symbol);
         }
 
         public void Visit(CompoundNode node)
@@ -132,25 +123,6 @@ namespace LSBASI3
                 throw new TypeAccessException(
                     $"Cannot assign value of type {valueType} to variable {variable}");
             }
-        }
-
-        public void Visit(BinaryOperationNode binaryOperationNode)
-        {
-            binaryOperationNode.Left.Accept(this);
-            binaryOperationNode.Right.Accept(this);
-        }
-
-        public void Visit(UnaryOperationNode unaryOperationNode)
-        {
-            unaryOperationNode.Child.Accept(this);
-        }
-
-        public void Visit(NumberNode numberNode)
-        {
-        }
-
-        public void Visit(TypeNode typeNode)
-        {
         }
 
         public TypeSymbol Evaluate(NumberNode node)
@@ -194,6 +166,26 @@ namespace LSBASI3
         }
 
         #region unused methods
+
+        public void Visit(BinaryOperationNode binaryOperationNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(UnaryOperationNode unaryOperationNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(NumberNode numberNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(TypeNode typeNode)
+        {
+            throw new NotImplementedException();
+        }
 
         public TypeSymbol Evaluate(TypeNode node)
         {

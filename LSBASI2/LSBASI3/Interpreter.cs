@@ -9,7 +9,9 @@ namespace LSBASI3
 {
     public class Interpreter : IVisitor, IEvaluator<TypedValue>
     {
-        private readonly AstNode rootNode;
+        private readonly ScopedSymbolTableBuilder scopedSymbolTableBuilder;
+        private readonly SemanticAnalyzer semanticAnalyzer;
+        private readonly ProgramNode rootNode;
         private ScopedSymbolTable currentScope;
         private ScopedMemory memoryScope;
 #if DEBUG
@@ -17,11 +19,16 @@ namespace LSBASI3
         public HashSet<ScopedMemory> ScopedMemories { get; set; }
 #endif
 
-        public Interpreter(Parser parser, SemanticAnalyzer semanticAnalyzer)
+        public Interpreter(Parser parser, ScopedSymbolTableBuilder scopedSymbolTableBuilder, SemanticAnalyzer semanticAnalyzer)
         {
+            this.scopedSymbolTableBuilder = scopedSymbolTableBuilder;
+            this.semanticAnalyzer = semanticAnalyzer;
+
             var node = parser.Parse();
             this.rootNode = node;
-            this.currentScope = semanticAnalyzer.Analyze(node);
+
+            this.currentScope = scopedSymbolTableBuilder.Build(node);
+
             this.memoryScope = ScopedMemory.ProgramMemory(node.Name);
 #if DEBUG
             Scopes = new HashSet<ScopedSymbolTable>();
@@ -31,6 +38,7 @@ namespace LSBASI3
 
         public void Interpret()
         {
+            semanticAnalyzer.Analyze(this.rootNode, this.currentScope);
             this.rootNode.Accept(this);
         }
 

@@ -26,6 +26,7 @@ namespace LSBASI3
    end;
 
 begin { Main }
+      bbb := 234;
     y := 2 + 40;
     Alpha(123.456, 2);
 end.  { Main }";
@@ -35,7 +36,7 @@ end.  { Main }";
             var node = new Parser(new Lexer(x)).Parse();
             var translator = new CSharpTranslator(node);
             var text = translator.Translate();
-            var interpreter = new Interpreter(parser, new SemanticAnalyzer());
+            var interpreter = new Interpreter(parser, new ScopedSymbolTableBuilder(), new SemanticAnalyzer());
             interpreter.Interpret();
 
             //Console.WriteLine(y);
