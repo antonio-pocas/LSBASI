@@ -112,7 +112,9 @@ namespace LSBASI3
 
         public void Visit(ProcedureCallNode node)
         {
-            throw new NotImplementedException();
+            var arguments = node.Arguments.Select(x => x.Yield(this));
+            var argumentString = string.Join(", ", arguments);
+            AppendIndented($"{node.Name}.Execute({argumentString})");
         }
 
         public void Visit(CompoundNode node)

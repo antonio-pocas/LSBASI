@@ -32,8 +32,8 @@ end.  { Main }";
             var lexer = new Lexer(x);
             var parser = new Parser(lexer);
             var node = new Parser(new Lexer(x)).Parse();
-            //var translator = new CSharpTranslator(node);
-            //var text = translator.Translate();
+            var translator = new CSharpTranslator(node);
+            var text = translator.Translate();
             var interpreter = new Interpreter(parser, new SemanticAnalyzer());
             interpreter.Interpret();
 
