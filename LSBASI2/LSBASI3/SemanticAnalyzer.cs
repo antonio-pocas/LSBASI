@@ -1,19 +1,14 @@
 ﻿using System;
 using System.Linq;
-using System.Net;
 
 namespace LSBASI3
 {
     public class SemanticAnalyzer : IVisitor, IEvaluator<TypeSymbol>
     {
         private ScopedSymbolTable currentScope;
-        private ScopedAnalysisTable currentAnalysisScope;
-        private bool runningProgramStatements;
 
         public SemanticAnalyzer()
         {
-            currentAnalysisScope = new ScopedAnalysisTable(null);
-            runningProgramStatements = false;
         }
 
         public ScopedSymbolTable Analyze(ProgramNode program, ScopedSymbolTable globalScope)
@@ -28,7 +23,6 @@ namespace LSBASI3
         {
             currentScope = currentScope.Lookup<ProgramSymbol>(node.Name).Scope;
 
-            runningProgramStatements = true;
             node.Block.Accept(this);
 
             currentScope = currentScope.EnclosingScope;
@@ -36,15 +30,11 @@ namespace LSBASI3
 
         public void Visit(BlockNode node)
         {
-            bool programBlock = runningProgramStatements;
-            runningProgramStatements = false;
-
             foreach (var declaration in node.Declarations)
             {
                 declaration.Accept(this);
             }
 
-            runningProgramStatements = programBlock;
             node.Compound.Accept(this);
         }
 
@@ -94,39 +84,6 @@ namespace LSBASI3
                 {
                     throw new ArgumentException($"Error in call to {name}, cannot pass argument of type {argumentType} to parameter {parameters[i]}");
                 }
-            }
-
-            if (runningProgramStatements)
-            {
-                var myScope = currentScope;
-                var myAnalysisScope = currentAnalysisScope;
-
-                currentAnalysisScope = new ScopedAnalysisTable(currentAnalysisScope);
-                currentScope = procedure.Scope;
-
-                for (int i = 0; i < parameters.Count; i++)
-                {
-                    var parameter = parameters[i];
-                    currentAnalysisScope[parameter.Name] = new SymbolInfo()
-                    {
-                        Depth = currentScope.Level,
-                        HasValue = true,
-                        Type = SymbolType.Variable,
-                        Symbol = parameter,
-                        Scope = currentScope
-                    };
-
-                    var argumentType = arguments[i].Yield(this);
-                    if (!TypeChecker.AreCompatible(parameters[i].Type, argumentType))
-                    {
-                        throw new ArgumentException($"Error in call to {name}, cannot pass argument of type {argumentType} to parameter {parameters[i]}");
-                    }
-                }
-
-                procedure.Reference.Block.Compound.Accept(this);
-
-                currentScope = myScope;
-                currentAnalysisScope = myAnalysisScope;
             }
         }
 
@@ -182,18 +139,6 @@ namespace LSBASI3
                 throw new TypeAccessException(
                     $"Cannot assign value of type {valueType} to variable {variable}");
             }
-
-            if (runningProgramStatements)
-            {
-                currentAnalysisScope[name] = new SymbolInfo()
-                {
-                    Depth = currentScope.Level,
-                    HasValue = true,
-                    Type = SymbolType.Variable,
-                    Scope = currentScope,
-                    Symbol = symbol,
-                };
-            }
         }
 
         public TypeSymbol Evaluate(NumberNode node)
@@ -218,15 +163,6 @@ namespace LSBASI3
             if (variable == null)
             {
                 throw new TypeAccessException($"Use of undeclared variable {name}");
-            }
-
-            if (runningProgramStatements)
-            {
-                var symbolInfo = currentAnalysisScope[name];
-                if (symbolInfo == null || !symbolInfo.HasValue)
-                {
-                    throw new FieldAccessException($"Use of unassigned variable {variable}");
-                }
             }
 
             return variable.Type;

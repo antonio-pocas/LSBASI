@@ -11,6 +11,7 @@ namespace LSBASI3
     {
         private readonly ScopedSymbolTableBuilder scopedSymbolTableBuilder;
         private readonly SemanticAnalyzer semanticAnalyzer;
+        private readonly AssignmentAnalyzer assignmentAnalyzer;
         private readonly ProgramNode rootNode;
         private ScopedSymbolTable currentScope;
         private StackFrame currentStackFrame;
@@ -19,10 +20,11 @@ namespace LSBASI3
         public HashSet<StackFrame> StackFrames { get; set; }
 #endif
 
-        public Interpreter(Parser parser, ScopedSymbolTableBuilder scopedSymbolTableBuilder, SemanticAnalyzer semanticAnalyzer)
+        public Interpreter(Parser parser, ScopedSymbolTableBuilder scopedSymbolTableBuilder, SemanticAnalyzer semanticAnalyzer, AssignmentAnalyzer assignmentAnalyzer)
         {
             this.scopedSymbolTableBuilder = scopedSymbolTableBuilder;
             this.semanticAnalyzer = semanticAnalyzer;
+            this.assignmentAnalyzer = assignmentAnalyzer;
 
             var node = parser.Parse();
             this.rootNode = node;
@@ -39,6 +41,7 @@ namespace LSBASI3
         public void Interpret()
         {
             semanticAnalyzer.Analyze(this.rootNode, this.currentScope);
+            var warnings = assignmentAnalyzer.Analyze(this.rootNode, this.currentScope);
             this.rootNode.Accept(this);
         }
 
