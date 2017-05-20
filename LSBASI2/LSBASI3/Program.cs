@@ -13,7 +13,7 @@ namespace LSBASI3
             //var x = Console.ReadLine();
             var x = @"program Main;
    var x, y, tempum, tempdois : real;
-   var aaa, bbb : integer;
+   var aaa, bbb, testeste : integer;
 
    procedure Alpha(Alpha : real; int: integer);
       var y : integer;
@@ -26,6 +26,11 @@ namespace LSBASI3
       {tempum := bbb;}
    end;
 
+function one: integer;
+    begin
+        one := 1;
+    end;
+
     function plustwo(numba : integer): integer;
         var
            result: integer;
@@ -35,7 +40,7 @@ namespace LSBASI3
         end;
 begin { Main }
       {bbb := 234;}
-    y := 2 + 40 + plustwo(5);
+    y := 2 + 40 + plustwo(5) + one;
     Alpha(123.456, 2);
 end.  { Main }";
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace LSBASI3
@@ -207,6 +208,8 @@ namespace LSBASI3
                 throw new Exception($"Use of undeclared variable {name}");
             }
 
+            node.Result = FixParenlessFunctionCalls(node.Result);
+
             var valueType = node.Result.Yield(this);
 
             if (!TypeChecker.AreCompatible(variable.Type, valueType))
@@ -245,16 +248,35 @@ namespace LSBASI3
 
         public TypeSymbol Evaluate(UnaryOperationNode node)
         {
+            node.Child = FixParenlessFunctionCalls(node.Child);
             var type = node.Child.Yield(this);
             return TypeChecker.CheckUnaryOperation(type);
         }
 
         public TypeSymbol Evaluate(BinaryOperationNode node)
         {
+            node.Left = FixParenlessFunctionCalls(node.Left);
+            node.Right = FixParenlessFunctionCalls(node.Right);
+
             var leftType = node.Left.Yield(this);
             var rightType = node.Right.Yield(this);
 
             return TypeChecker.CheckBinaryOperation(node.Type, leftType, rightType);
+        }
+
+        private AstNode FixParenlessFunctionCalls(AstNode node)
+        {
+            var nodeAsVariable = node as VariableNode;
+            if (nodeAsVariable != null)
+            {
+                var functionSymbol = currentScope.Lookup<TypedSymbol>(nodeAsVariable.Name) as FunctionSymbol;
+                if (functionSymbol != null)
+                {
+                    return new FunctionCallNode(nodeAsVariable.Name, new List<AstNode>());
+                }
+            }
+
+            return node;
         }
 
         #region unused methods

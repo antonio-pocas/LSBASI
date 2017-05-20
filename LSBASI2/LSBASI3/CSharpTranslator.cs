@@ -117,7 +117,11 @@ namespace LSBASI3
                 parameterBuilder.Append($"{parameter.Type.Yield(this)} {parameter.Variable.Name},");
             }
 
-            AppendIndented($"public static {node.Type.Yield(this)} Execute({parameterBuilder.ToString(0, parameterBuilder.Length - 1)})");
+            var parameters = parameterBuilder.Length > 0
+                ? parameterBuilder.ToString(0, parameterBuilder.Length - 1)
+                : string.Empty;
+
+            AppendIndented($"public static {node.Type.Yield(this)} Execute({parameters})");
             AppendIndented("{");
 
             node.Block.Accept(this);

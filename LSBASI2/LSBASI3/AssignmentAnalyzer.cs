@@ -133,9 +133,8 @@ namespace LSBASI3
 
             var parameters = function.Parameters;
 
-            for (int i = 0; i < parameters.Count; i++)
+            foreach (var parameter in parameters)
             {
-                var parameter = parameters[i];
                 currentAnalysisScope[parameter.Name] = new SymbolInfo()
                 {
                     Depth = currentScope.Level,

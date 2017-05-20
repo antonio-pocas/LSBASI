@@ -16,8 +16,7 @@ namespace LSBASI3
         private ScopedSymbolTable currentScope;
         private StackFrame currentStackFrame;
 #if DEBUG
-        public HashSet<ScopedSymbolTable> Scopes { get; set; }
-        public HashSet<StackFrame> StackFrames { get; set; }
+        public List<ExecutionContext> ExecutionContexts { get; set; }
 #endif
 
         public Interpreter(Parser parser, ScopedSymbolTableBuilder scopedSymbolTableBuilder, SemanticAnalyzer semanticAnalyzer, AssignmentAnalyzer assignmentAnalyzer)
@@ -33,8 +32,7 @@ namespace LSBASI3
 
             this.currentStackFrame = StackFrame.ProgramMemory(node.Name);
 #if DEBUG
-            Scopes = new HashSet<ScopedSymbolTable>();
-            StackFrames = new HashSet<StackFrame>();
+            ExecutionContexts = new List<ExecutionContext>();
 #endif
         }
 
@@ -279,8 +277,11 @@ namespace LSBASI3
 
         private void AddScopes()
         {
-            Scopes.Add(currentScope);
-            StackFrames.Add(currentStackFrame);
+            ExecutionContexts.Add(new ExecutionContext()
+            {
+                Scope = currentScope,
+                StackFrame = currentStackFrame
+            });
         }
 
 #endif
@@ -368,5 +369,15 @@ namespace LSBASI3
         }
 
         #endregion unused methods
+
+#if DEBUG
+
+        public sealed class ExecutionContext
+        {
+            public StackFrame StackFrame { get; set; }
+            public ScopedSymbolTable Scope { get; set; }
+        }
+
+#endif
     }
 }
