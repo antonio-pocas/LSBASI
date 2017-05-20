@@ -23,6 +23,7 @@ namespace LSBASI3
             AddKeyword(Token.Begin());
             AddKeyword(Token.End());
             AddKeyword(Token.IntegerDivision());
+            AddKeyword(Token.Function());
         }
 
         private static void AddKeyword(Token keyword)

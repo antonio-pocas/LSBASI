@@ -49,6 +49,7 @@ namespace LSBASI3
     public enum SymbolType
     {
         Procedure,
+        Function,
         Variable,
         Type
     }

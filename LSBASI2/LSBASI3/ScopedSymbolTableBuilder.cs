@@ -70,6 +70,42 @@ namespace LSBASI3
             currentScope.Define(new ProcedureSymbol(name, formalParameters, procedureScope, node));
         }
 
+        public void Visit(FunctionNode node)
+        {
+            var name = node.Name;
+
+            var symbol = currentScope.LocalLookup(name);
+            if (symbol != null)
+            {
+                throw new Exception($"Symbol {symbol} already exists in the current scope");
+            }
+
+            var procedureScope = new ScopedSymbolTable(name, currentScope.Level + 1, currentScope);
+            currentScope = procedureScope;
+            var formalParameters = new List<VarSymbol>();
+
+            foreach (var parameter in node.FormalParameters)
+            {
+                var parameterSymbol = new VarSymbol(parameter.Variable.Name, currentScope.Lookup<TypeSymbol>(parameter.Type.Value));
+                formalParameters.Add(parameterSymbol);
+                currentScope.Define(parameterSymbol);
+            }
+
+            var type = currentScope.Lookup<TypeSymbol>(node.Type.Value);
+
+            var returnValue = new VarSymbol(name, type);
+            currentScope.Define(returnValue);
+
+            node.Block.Accept(this);
+
+            currentScope = currentScope.EnclosingScope;
+            currentScope.Define(new FunctionSymbol(name, formalParameters, procedureScope, node, type));
+        }
+
+        public void Visit(FunctionCallNode node)
+        {
+        }
+
         public void Visit(CompoundNode node)
         {
             foreach (var child in node.Children)

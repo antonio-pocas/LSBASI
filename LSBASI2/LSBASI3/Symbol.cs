@@ -212,6 +212,26 @@ namespace LSBASI3
         }
     }
 
+    public class FunctionSymbol : TypedSymbol
+    {
+        public List<VarSymbol> Parameters { get; set; }
+        public ScopedSymbolTable Scope { get; set; }
+        public FunctionNode Reference { get; set; }
+
+        public FunctionSymbol(string name, List<VarSymbol> parameters, ScopedSymbolTable scope, FunctionNode function, TypeSymbol type) : base(name, type)
+        {
+            Parameters = parameters;
+            Scope = scope;
+            Reference = function;
+        }
+
+        public override string ToString()
+        {
+            var parameters = Parameters.Any() ? $"({string.Join(", ", Parameters)})" : "()";
+            return $"{Name}{parameters} : {Type}";
+        }
+    }
+
     public class ProcedureSymbol : Symbol
     {
         public List<VarSymbol> Parameters { get; set; }

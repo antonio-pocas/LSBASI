@@ -9,8 +9,9 @@ namespace LSBASI3
     /// Grammar:
     /// Program:                    PROGRAM Variable SEMI Block DOT
     /// Block:                      Declarations CompoundStatement
-    /// Declarations:               (VAR (VariableDeclaration SEMI)+)* | (Procedure)* | EmptyRule
-    /// Procedure:                  PROCEDURE ID SEMI (LPAREN FormalParameterList RPAREN)? Block SEMI
+    /// Declarations:               (VAR (VariableDeclaration SEMI)+)* | (Procedure)* | (FunctionDeclaration)* | EmptyRule
+    /// Procedure:                  PROCEDURE ID (LPAREN FormalParameterList RPAREN)? SEMI Block SEMI
+    /// FunctionDeclaration:        FUNCTION  ID (LPAREN FormalParameterList RPAREN)? COLON TypeSpecification SEMI Block SEMI
     /// FormalParameterList:        FormalParameters | FormalParameters SEMI FormalParameterList
     /// FormalParameters:           ID (COMMA ID)* COLON TypeSpecification
     /// VariableDeclaration:        ID (COMMA ID)* COLON TypeSpecification
@@ -29,7 +30,9 @@ namespace LSBASI3
     ///                           | REAL_CONST
     ///                           | LPAREN Expr RPAREN
     ///                           | Variable
+    ///                           | Function
     /// Variable:                   ID
+    /// Function:                   ID (LPAREN (Expr)+ RPAREN)?
     /// </summary>
     public class Parser
     {
@@ -127,6 +130,12 @@ namespace LSBASI3
                 declarations.Add(procedure);
             }
 
+            while (CurrentToken.Type == TokenType.Function)
+            {
+                var function = FunctionDeclaration();
+                declarations.Add(function);
+            }
+
             return declarations;
         }
 
@@ -149,6 +158,29 @@ namespace LSBASI3
             var block = Block();
             Eat(TokenType.Semicolon);
             return new ProcedureNode(name, parameters, block);
+        }
+
+        private FunctionNode FunctionDeclaration()
+        {
+            Eat(TokenType.Function);
+            var name = CurrentToken.Value;
+            Eat(TokenType.Id);
+            var parameters = new List<ParameterNode>();
+            if (CurrentToken.Type == TokenType.LeftParen)
+            {
+                Eat(TokenType.LeftParen);
+                while (CurrentToken.Type == TokenType.Id)
+                {
+                    parameters = FormalParameterList();
+                }
+                Eat(TokenType.RightParen);
+            }
+            Eat(TokenType.Colon);
+            var type = TypeSpecification();
+            Eat(TokenType.Semicolon);
+            var block = Block();
+            Eat(TokenType.Semicolon);
+            return new FunctionNode(name, parameters, block, type);
         }
 
         private List<ParameterNode> FormalParameterList()
@@ -274,13 +306,14 @@ namespace LSBASI3
 
                     if (CurrentToken.Type != TokenType.RightParen)
                     {
-                        if (CurrentToken.Type == TokenType.Comma)
+                        try
                         {
                             Eat(TokenType.Comma);
                         }
-                        else
+                        catch (InvalidOperationException ex)
                         {
-                            throw new Exception($"Unexpected token {CurrentToken} while parsing argument list of call to procedure {name}");
+                            throw new InvalidOperationException(
+                                $"Unexpected token {CurrentToken} while parsing argument list of call to procedure {name}", ex);
                         }
                     }
                 }
@@ -390,7 +423,18 @@ namespace LSBASI3
                 return ret;
             }
 
-            return Variable();
+            if (CurrentToken.Type == TokenType.Id)
+            {
+                Lookahead();
+                if (LookaheadToken.Type == TokenType.LeftParen)
+                {
+                    return Function();
+                }
+
+                return Variable();
+            }
+
+            throw new Exception($"Unexpected token {CurrentToken}");
         }
 
         private VariableNode Variable()
@@ -398,6 +442,36 @@ namespace LSBASI3
             var token = CurrentToken;
             Eat(TokenType.Id);
             return new VariableNode(token);
+        }
+
+        private FunctionCallNode Function()
+        {
+            var name = Variable();
+            var arguments = new List<AstNode>();
+            if (CurrentToken.Type == TokenType.LeftParen)
+            {
+                Eat(TokenType.LeftParen);
+                while (CurrentToken.Type != TokenType.RightParen)
+                {
+                    var parameter = Expr();
+                    arguments.Add(parameter);
+
+                    if (CurrentToken.Type != TokenType.RightParen)
+                    {
+                        try
+                        {
+                            Eat(TokenType.Comma);
+                        }
+                        catch (InvalidOperationException ex)
+                        {
+                            throw new InvalidOperationException($"Unexpected token {CurrentToken} while parsing argument list of call to function {name}", ex);
+                        }
+                    }
+                }
+                Eat(TokenType.RightParen);
+            }
+
+            return new FunctionCallNode(name.Name, arguments);
         }
     }
 }

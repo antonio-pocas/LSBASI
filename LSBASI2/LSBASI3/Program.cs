@@ -23,12 +23,19 @@ namespace LSBASI3
       y := int + 2;
       {tempum := tempdois + z; }
       tempdois := y;
-      tempum := bbb;
+      {tempum := bbb;}
    end;
 
+    function plustwo(numba : integer): integer;
+        var
+           result: integer;
+        begin
+           result := numba + 2;
+           plustwo := result;
+        end;
 begin { Main }
       {bbb := 234;}
-    y := 2 + 40;
+    y := 2 + 40 + plustwo(5);
     Alpha(123.456, 2);
 end.  { Main }";
 

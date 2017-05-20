@@ -56,6 +56,81 @@ namespace LSBASI3
             currentScope = myScope;
         }
 
+        public void Visit(FunctionNode node)
+        {
+            var name = node.Name;
+
+            var myScope = currentScope;
+
+            var functionScope = currentScope.Lookup<FunctionSymbol>(name).Scope;
+            currentScope = functionScope;
+
+            node.Block.Accept(this);
+
+            currentScope = myScope;
+        }
+
+        public void Visit(FunctionCallNode node)
+        {
+            var name = node.Name;
+            var function = currentScope.Lookup<FunctionSymbol>(name);
+            if (function == null)
+            {
+                throw new MissingMethodException($"Use of undefined function {name}");
+            }
+
+            var parameters = function.Parameters;
+            var arguments = node.Arguments;
+            if (arguments.Count != parameters.Count)
+            {
+                throw new ArgumentException(
+                    $"Error in call to {name}, number of arguments ({arguments.Count}) differs from number of defined parameters ({parameters.Count})");
+            }
+
+            for (int i = 0; i < arguments.Count; i++)
+            {
+                var argumentType = arguments[i].Yield(this);
+                if (!TypeChecker.AreCompatible(parameters[i].Type, argumentType))
+                {
+                    throw new ArgumentException($"Error in call to {name}, cannot pass argument of type {argumentType} to parameter {parameters[i]}");
+                }
+            }
+        }
+
+        public TypeSymbol Evaluate(FunctionNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public TypeSymbol Evaluate(FunctionCallNode node)
+        {
+            var name = node.Name;
+            var function = currentScope.Lookup<FunctionSymbol>(name);
+            if (function == null)
+            {
+                throw new MissingMethodException($"Use of undefined function {name}");
+            }
+
+            var parameters = function.Parameters;
+            var arguments = node.Arguments;
+            if (arguments.Count != parameters.Count)
+            {
+                throw new ArgumentException(
+                    $"Error in call to {name}, number of arguments ({arguments.Count}) differs from number of defined parameters ({parameters.Count})");
+            }
+
+            for (int i = 0; i < arguments.Count; i++)
+            {
+                var argumentType = arguments[i].Yield(this);
+                if (!TypeChecker.AreCompatible(parameters[i].Type, argumentType))
+                {
+                    throw new ArgumentException($"Error in call to {name}, cannot pass argument of type {argumentType} to parameter {parameters[i]}");
+                }
+            }
+
+            return function.Type;
+        }
+
         public void Visit(ParameterNode node)
         {
         }
@@ -162,7 +237,7 @@ namespace LSBASI3
             var variable = currentScope.Lookup<TypedSymbol>(name);
             if (variable == null)
             {
-                throw new TypeAccessException($"Use of undeclared variable {name}");
+                throw new TypeAccessException($"Use of undeclared variable or function {name}");
             }
 
             return variable.Type;

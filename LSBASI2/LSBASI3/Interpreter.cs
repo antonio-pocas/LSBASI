@@ -110,6 +110,16 @@ namespace LSBASI3
         {
         }
 
+        public void Visit(FunctionNode node)
+        {
+        }
+
+        public void Visit(FunctionCallNode node)
+        {
+            //TODO
+            throw new NotImplementedException();
+        }
+
         public void Visit(ProcedureCallNode node)
         {
             var name = node.Name;
@@ -227,6 +237,42 @@ namespace LSBASI3
             }
 
             throw new Exception();
+        }
+
+        public TypedValue Evaluate(FunctionNode node)
+        {
+            //TODO
+
+            throw new NotImplementedException();
+        }
+
+        public TypedValue Evaluate(FunctionCallNode node)
+        {
+            var name = node.Name;
+            var function = currentScope.Lookup<FunctionSymbol>(name);
+            var parameters = function.Parameters;
+            var arguments = node.Arguments;
+
+            var functionStackFrame = new StackFrame(name, currentStackFrame.Depth + 1, currentStackFrame);
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                functionStackFrame[parameters[i].Name] = arguments[i].Yield(this);
+            }
+
+            currentStackFrame = functionStackFrame;
+            var myScope = currentScope;
+            currentScope = function.Scope;
+#if DEBUG
+            AddScopes();
+#endif
+            function.Reference.Block.Accept(this);
+
+            var result = currentStackFrame[name];
+
+            currentScope = myScope;
+            currentStackFrame = functionStackFrame.PreviousFrame;
+
+            return result;
         }
 
 #if DEBUG

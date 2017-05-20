@@ -115,6 +115,26 @@ namespace LSBASI3
         }
     }
 
+    public class FunctionNode : ProcedureNode
+    {
+        public TypeNode Type { get; set; }
+
+        public FunctionNode(string name, List<ParameterNode> formalParameters, BlockNode block, TypeNode type) : base(name, formalParameters, block)
+        {
+            Type = type;
+        }
+
+        public override void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        public override T Yield<T>(IEvaluator<T> evaluator)
+        {
+            return evaluator.Evaluate(this);
+        }
+    }
+
     public class ParameterNode : AstNode
     {
         public VariableNode Variable { get; set; }
@@ -251,6 +271,25 @@ namespace LSBASI3
         public override void Accept(IVisitor visitor)
         {
             visitor.Visit(this);
+        }
+    }
+
+    public class FunctionCallNode : ProcedureCallNode
+    {
+        public Type Type { get; set; }
+
+        public FunctionCallNode(string name, List<AstNode> arguments) : base(name, arguments)
+        {
+        }
+
+        public override void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        public override T Yield<T>(IEvaluator<T> evaluator)
+        {
+            return evaluator.Evaluate(this);
         }
     }
 
@@ -391,6 +430,10 @@ namespace LSBASI3
 
         void Visit(ProcedureNode node);
 
+        void Visit(FunctionNode node);
+
+        void Visit(FunctionCallNode node);
+
         void Visit(ParameterNode node);
 
         void Visit(ProcedureCallNode node);
@@ -425,5 +468,9 @@ namespace LSBASI3
         T Evaluate(ParameterNode node);
 
         T Evaluate(ProcedureCallNode node);
+
+        T Evaluate(FunctionNode node);
+
+        T Evaluate(FunctionCallNode node);
     }
 }

@@ -122,6 +122,36 @@ namespace LSBASI3
             currentAnalysisScope = myAnalysisScope;
         }
 
+        public void Visit(FunctionCallNode node)
+        {
+            var myScope = currentScope;
+            var myAnalysisScope = currentAnalysisScope;
+            var function = currentScope.Lookup<FunctionSymbol>(node.Name);
+
+            currentAnalysisScope = new ScopedAnalysisTable(currentAnalysisScope);
+            currentScope = function.Scope;
+
+            var parameters = function.Parameters;
+
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                var parameter = parameters[i];
+                currentAnalysisScope[parameter.Name] = new SymbolInfo()
+                {
+                    Depth = currentScope.Level,
+                    HasValue = true,
+                    Type = SymbolType.Variable,
+                    Symbol = parameter,
+                    Scope = currentScope
+                };
+            }
+
+            function.Reference.Block.Compound.Accept(this);
+
+            currentScope = myScope;
+            currentAnalysisScope = myAnalysisScope;
+        }
+
         #region unused methods
 
         public void Visit(TypeNode typeNode)
@@ -130,6 +160,11 @@ namespace LSBASI3
         }
 
         public void Visit(ProcedureNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(FunctionNode node)
         {
             throw new NotImplementedException();
         }

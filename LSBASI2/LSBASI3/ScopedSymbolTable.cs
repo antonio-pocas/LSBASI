@@ -74,7 +74,7 @@ namespace LSBASI3
         public Symbol Lookup(string name)
         {
             Symbol symbol;
-            if (!table.TryGetValue(name, out symbol))
+            if (!table.TryGetValue(name, out symbol) && EnclosingScope != null)
             {
                 symbol = EnclosingScope.Lookup(name);
             }

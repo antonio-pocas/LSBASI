@@ -31,6 +31,11 @@
             return new Token(TokenType.Procedure, "PROCEDURE");
         }
 
+        public static Token Function()
+        {
+            return new Token(TokenType.Function, "FUNCTION");
+        }
+
         public static Token Var()
         {
             return new Token(TokenType.Var, "VAR");
@@ -136,6 +141,7 @@
     {
         Program,
         Procedure,
+        Function,
         Var,
         Colon,
         Comma,

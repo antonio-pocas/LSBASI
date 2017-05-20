@@ -105,9 +105,34 @@ namespace LSBASI3
             AppendIndented("}");
         }
 
-        public void Visit(ParameterNode node)
+        public void Visit(FunctionNode node)
         {
-            throw new NotImplementedException();
+            AppendIndented($"public static class {node.Name}");
+            AppendIndented("{");
+            currentLevel++;
+
+            var parameterBuilder = new StringBuilder();
+            foreach (var parameter in node.FormalParameters)
+            {
+                parameterBuilder.Append($"{parameter.Type.Yield(this)} {parameter.Variable.Name},");
+            }
+
+            AppendIndented($"public static {node.Type.Yield(this)} Execute({parameterBuilder.ToString(0, parameterBuilder.Length - 1)})");
+            AppendIndented("{");
+
+            node.Block.Accept(this);
+            //TODO fix return statement
+
+            AppendIndented("}");
+            currentLevel--;
+            AppendIndented("}");
+        }
+
+        public void Visit(FunctionCallNode node)
+        {
+            var arguments = node.Arguments.Select(x => x.Yield(this));
+            var argumentString = string.Join(", ", arguments);
+            AppendIndented($"{node.Name}.Execute({argumentString})");
         }
 
         public void Visit(ProcedureCallNode node)
@@ -134,31 +159,6 @@ namespace LSBASI3
             var name = node.Variable.Name;
             var value = node.Result.Yield(this);
             AppendIndented($"{name} = {value};");
-        }
-
-        public void Visit(VariableNode variableNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(BinaryOperationNode binaryOperationNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(UnaryOperationNode unaryOperationNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(NumberNode numberNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(TypeNode typeNode)
-        {
-            throw new NotImplementedException();
         }
 
         public string Evaluate(NumberNode node)
@@ -190,6 +190,45 @@ namespace LSBASI3
             }
 
             return "int";
+        }
+
+        public string Evaluate(FunctionCallNode node)
+        {
+            var arguments = node.Arguments.Select(x => x.Yield(this));
+            var argumentString = string.Join(", ", arguments);
+            return $"{node.Name}.Execute({argumentString})";
+        }
+
+        #region unused methods
+
+        public void Visit(ParameterNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(VariableNode variableNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(BinaryOperationNode binaryOperationNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(UnaryOperationNode unaryOperationNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(NumberNode numberNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(TypeNode typeNode)
+        {
+            throw new NotImplementedException();
         }
 
         public string Evaluate(NoOpNode noOpNode)
@@ -236,5 +275,12 @@ namespace LSBASI3
         {
             throw new NotImplementedException();
         }
+
+        public string Evaluate(FunctionNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion unused methods
     }
 }
