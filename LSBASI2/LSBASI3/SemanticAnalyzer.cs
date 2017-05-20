@@ -7,9 +7,13 @@ namespace LSBASI3
     public class SemanticAnalyzer : IVisitor, IEvaluator<TypeSymbol>
     {
         private ScopedSymbolTable currentScope;
+        private ScopedAnalysisTable currentAnalysisScope;
+        private bool runningProgramStatements;
 
         public SemanticAnalyzer()
         {
+            currentAnalysisScope = new ScopedAnalysisTable(null);
+            runningProgramStatements = false;
         }
 
         public ScopedSymbolTable Analyze(ProgramNode program, ScopedSymbolTable globalScope)
@@ -23,9 +27,29 @@ namespace LSBASI3
         public void Visit(ProgramNode node)
         {
             currentScope = currentScope.Lookup<ProgramSymbol>(node.Name).Scope;
+
+            runningProgramStatements = true;
             node.Block.Accept(this);
 
             currentScope = currentScope.EnclosingScope;
+        }
+
+        public void Visit(BlockNode node)
+        {
+            bool programBlock = runningProgramStatements;
+            runningProgramStatements = false;
+
+            foreach (var declaration in node.Declarations)
+            {
+                declaration.Accept(this);
+            }
+
+            runningProgramStatements = programBlock;
+            node.Compound.Accept(this);
+        }
+
+        public void Visit(DeclarationNode node)
+        {
         }
 
         public void Visit(ProcedureNode node)
@@ -71,19 +95,39 @@ namespace LSBASI3
                     throw new ArgumentException($"Error in call to {name}, cannot pass argument of type {argumentType} to parameter {parameters[i]}");
                 }
             }
-        }
 
-        public void Visit(BlockNode node)
-        {
-            foreach (var declaration in node.Declarations)
+            if (runningProgramStatements)
             {
-                declaration.Accept(this);
-            }
-            node.Compound.Accept(this);
-        }
+                var myScope = currentScope;
+                var myAnalysisScope = currentAnalysisScope;
 
-        public void Visit(DeclarationNode node)
-        {
+                currentAnalysisScope = new ScopedAnalysisTable(currentAnalysisScope);
+                currentScope = procedure.Scope;
+
+                for (int i = 0; i < parameters.Count; i++)
+                {
+                    var parameter = parameters[i];
+                    currentAnalysisScope[parameter.Name] = new SymbolInfo()
+                    {
+                        Depth = currentScope.Level,
+                        HasValue = true,
+                        Type = SymbolType.Variable,
+                        Symbol = parameter,
+                        Scope = currentScope
+                    };
+
+                    var argumentType = arguments[i].Yield(this);
+                    if (!TypeChecker.AreCompatible(parameters[i].Type, argumentType))
+                    {
+                        throw new ArgumentException($"Error in call to {name}, cannot pass argument of type {argumentType} to parameter {parameters[i]}");
+                    }
+                }
+
+                procedure.Reference.Block.Compound.Accept(this);
+
+                currentScope = myScope;
+                currentAnalysisScope = myAnalysisScope;
+            }
         }
 
         public void Visit(CompoundNode node)
@@ -97,8 +141,16 @@ namespace LSBASI3
         public void Visit(VariableNode variableNode)
         {
             var name = variableNode.Name;
-            if (currentScope.Lookup<VarSymbol>(name) == null)
+            var symbol = currentScope.Lookup(name);
+
+            var variable = symbol as VarSymbol;
+
+            if (variable == null)
             {
+                if (symbol != null)
+                {
+                    throw new Exception($"Cannot assign value to symbol {symbol}");
+                }
                 throw new Exception($"Use of undeclared variable {name}");
             }
         }
@@ -110,9 +162,16 @@ namespace LSBASI3
         public void Visit(AssignmentNode node)
         {
             var name = node.Variable.Name;
-            var variable = currentScope.Lookup<VarSymbol>(name);
+            var symbol = currentScope.Lookup(name);
+
+            var variable = symbol as VarSymbol;
+
             if (variable == null)
             {
+                if (symbol != null)
+                {
+                    throw new Exception($"Cannot assign value to symbol {symbol}");
+                }
                 throw new Exception($"Use of undeclared variable {name}");
             }
 
@@ -122,6 +181,18 @@ namespace LSBASI3
             {
                 throw new TypeAccessException(
                     $"Cannot assign value of type {valueType} to variable {variable}");
+            }
+
+            if (runningProgramStatements)
+            {
+                currentAnalysisScope[name] = new SymbolInfo()
+                {
+                    Depth = currentScope.Level,
+                    HasValue = true,
+                    Type = SymbolType.Variable,
+                    Scope = currentScope,
+                    Symbol = symbol,
+                };
             }
         }
 
@@ -142,10 +213,20 @@ namespace LSBASI3
 
         public TypeSymbol Evaluate(VariableNode node)
         {
-            var variable = currentScope.Lookup<TypedSymbol>(node.Name);
+            var name = node.Name;
+            var variable = currentScope.Lookup<TypedSymbol>(name);
             if (variable == null)
             {
-                throw new TypeAccessException($"Use of undeclared variable {node.Name}");
+                throw new TypeAccessException($"Use of undeclared variable {name}");
+            }
+
+            if (runningProgramStatements)
+            {
+                var symbolInfo = currentAnalysisScope[name];
+                if (symbolInfo == null || !symbolInfo.HasValue)
+                {
+                    throw new FieldAccessException($"Use of unassigned variable {variable}");
+                }
             }
 
             return variable.Type;

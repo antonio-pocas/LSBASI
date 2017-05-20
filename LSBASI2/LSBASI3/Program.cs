@@ -15,18 +15,19 @@ namespace LSBASI3
    var x, y, tempum, tempdois : real;
    var aaa, bbb : integer;
 
-   procedure Alpha(double : real; int: integer);
+   procedure Alpha(Alpha : real; int: integer);
       var y : integer;
       var z : real;
    begin
-      z := double + 2;
+      z := Alpha + 2;
       y := int + 2;
-      tempum := z;
+      {tempum := tempdois + z; }
       tempdois := y;
+      tempum := bbb;
    end;
 
 begin { Main }
-      bbb := 234;
+      {bbb := 234;}
     y := 2 + 40;
     Alpha(123.456, 2);
 end.  { Main }";

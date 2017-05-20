@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace LSBASI3
 {
@@ -14,10 +15,6 @@ namespace LSBASI3
             return currentScope;
         }
 
-        public void Visit(AssignmentNode node)
-        {
-        }
-
         public void Visit(ProgramNode node)
         {
             currentScope = ScopedSymbolTable.CreateProgramScope(node.Name);
@@ -26,9 +23,35 @@ namespace LSBASI3
             currentScope = currentScope.EnclosingScope;
         }
 
+        public void Visit(BlockNode node)
+        {
+            foreach (var declaration in node.Declarations)
+            {
+                declaration.Accept(this);
+            }
+            node.Compound.Accept(this);
+        }
+
+        public void Visit(DeclarationNode node)
+        {
+            var type = currentScope.Lookup<TypeSymbol>(node.Type.Value);
+            if (type == null)
+            {
+                throw new TypeAccessException($"No type with name {node.Type.Value} declared");
+            }
+            var symbol = new VarSymbol(node.Variable.Name, type);
+            this.currentScope.Define(symbol);
+        }
+
         public void Visit(ProcedureNode node)
         {
             var name = node.Name;
+
+            var symbol = currentScope.LocalLookup(name);
+            if (symbol != null)
+            {
+                throw new Exception($"Symbol {symbol} already exists in the current scope");
+            }
 
             var procedureScope = new ScopedSymbolTable(name, currentScope.Level + 1, currentScope);
             currentScope = procedureScope;
@@ -47,21 +70,6 @@ namespace LSBASI3
             currentScope.Define(new ProcedureSymbol(name, formalParameters, procedureScope, node));
         }
 
-        public void Visit(BlockNode node)
-        {
-            foreach (var declaration in node.Declarations)
-            {
-                declaration.Accept(this);
-            }
-            node.Compound.Accept(this);
-        }
-
-        public void Visit(DeclarationNode node)
-        {
-            var symbol = new VarSymbol(node.Variable.Name, currentScope.Lookup<BuiltinTypeSymbol>(node.Type.Value));
-            this.currentScope.Define(symbol);
-        }
-
         public void Visit(CompoundNode node)
         {
             foreach (var child in node.Children)
@@ -71,6 +79,10 @@ namespace LSBASI3
         }
 
         public void Visit(NoOpNode node)
+        {
+        }
+
+        public void Visit(AssignmentNode node)
         {
         }
 

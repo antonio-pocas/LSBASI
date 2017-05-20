@@ -13,10 +13,10 @@ namespace LSBASI3
         private readonly SemanticAnalyzer semanticAnalyzer;
         private readonly ProgramNode rootNode;
         private ScopedSymbolTable currentScope;
-        private ScopedMemory memoryScope;
+        private StackFrame currentStackFrame;
 #if DEBUG
         public HashSet<ScopedSymbolTable> Scopes { get; set; }
-        public HashSet<ScopedMemory> ScopedMemories { get; set; }
+        public HashSet<StackFrame> StackFrames { get; set; }
 #endif
 
         public Interpreter(Parser parser, ScopedSymbolTableBuilder scopedSymbolTableBuilder, SemanticAnalyzer semanticAnalyzer)
@@ -29,10 +29,10 @@ namespace LSBASI3
 
             this.currentScope = scopedSymbolTableBuilder.Build(node);
 
-            this.memoryScope = ScopedMemory.ProgramMemory(node.Name);
+            this.currentStackFrame = StackFrame.ProgramMemory(node.Name);
 #if DEBUG
             Scopes = new HashSet<ScopedSymbolTable>();
-            ScopedMemories = new HashSet<ScopedMemory>();
+            StackFrames = new HashSet<StackFrame>();
 #endif
         }
 
@@ -49,7 +49,7 @@ namespace LSBASI3
 #endif
             var program = currentScope.Lookup<ProgramSymbol>(node.Name);
             currentScope = program.Scope;
-            memoryScope = new ScopedMemory("Global", 1, memoryScope);
+            currentStackFrame = new StackFrame("Global", 1, currentStackFrame);
 #if DEBUG
             AddScopes();
 #endif
@@ -100,7 +100,7 @@ namespace LSBASI3
                 result = variable.Type.Cast(result);
             }
 
-            memoryScope.AddAtLevel(name, result, variableInfo.ScopeLevel);
+            currentStackFrame.AddAtDepth(name, result, variableInfo.ScopeLevel);
         }
 
         public void Visit(ProcedureNode node)
@@ -114,13 +114,13 @@ namespace LSBASI3
             var parameters = procedure.Parameters;
             var arguments = node.Arguments;
 
-            var procedureMemory = new ScopedMemory(name, memoryScope.Level + 1, memoryScope);
+            var procedureMemory = new StackFrame(name, currentStackFrame.Depth + 1, currentStackFrame);
             for (int i = 0; i < parameters.Count; i++)
             {
                 procedureMemory[parameters[i].Name] = arguments[i].Yield(this);
             }
 
-            memoryScope = procedureMemory;
+            currentStackFrame = procedureMemory;
             var myScope = currentScope;
             currentScope = procedure.Scope;
 #if DEBUG
@@ -129,7 +129,7 @@ namespace LSBASI3
             procedure.Reference.Block.Accept(this);
 
             currentScope = myScope;
-            memoryScope = procedureMemory.EnclosingScope;
+            currentStackFrame = procedureMemory.PreviousFrame;
         }
 
         public TypedValue Evaluate(NumberNode node)
@@ -150,7 +150,7 @@ namespace LSBASI3
         public TypedValue Evaluate(VariableNode node)
         {
             var name = node.Name;
-            var value = memoryScope[name];
+            var value = currentStackFrame[name];
 
             if (value == null)
             {
@@ -231,7 +231,7 @@ namespace LSBASI3
         private void AddScopes()
         {
             Scopes.Add(currentScope);
-            ScopedMemories.Add(memoryScope);
+            StackFrames.Add(currentStackFrame);
         }
 
 #endif
