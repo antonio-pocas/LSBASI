@@ -224,6 +224,12 @@ namespace LSBASI3
             Scope = scope;
             Reference = procedure;
         }
+
+        public override string ToString()
+        {
+            var parameters = Parameters.Any() ? $"({string.Join(", ", Parameters)})" : string.Empty;
+            return Name + parameters;
+        }
     }
 
     public static class BuiltinType

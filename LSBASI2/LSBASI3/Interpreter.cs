@@ -12,6 +12,10 @@ namespace LSBASI3
         private readonly AstNode rootNode;
         private ScopedSymbolTable currentScope;
         private ScopedMemory memoryScope;
+#if DEBUG
+        public HashSet<ScopedSymbolTable> Scopes { get; set; }
+        public HashSet<ScopedMemory> ScopedMemories { get; set; }
+#endif
 
         public Interpreter(Parser parser, SemanticAnalyzer semanticAnalyzer)
         {
@@ -19,6 +23,10 @@ namespace LSBASI3
             this.rootNode = node;
             this.currentScope = semanticAnalyzer.Analyze(node);
             this.memoryScope = ScopedMemory.ProgramMemory(node.Name);
+#if DEBUG
+            Scopes = new HashSet<ScopedSymbolTable>();
+            ScopedMemories = new HashSet<ScopedMemory>();
+#endif
         }
 
         public void Interpret()
@@ -28,9 +36,15 @@ namespace LSBASI3
 
         public void Visit(ProgramNode node)
         {
+#if DEBUG
+            AddScopes();
+#endif
             var program = currentScope.Lookup<ProgramSymbol>(node.Name);
             currentScope = program.Scope;
             memoryScope = new ScopedMemory("Global", 1, memoryScope);
+#if DEBUG
+            AddScopes();
+#endif
             node.Block.Accept(this);
         }
 
@@ -81,38 +95,8 @@ namespace LSBASI3
             memoryScope.AddAtLevel(name, result, variableInfo.ScopeLevel);
         }
 
-        public void Visit(VariableNode variableNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(BinaryOperationNode binaryOperationNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(UnaryOperationNode unaryOperationNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(NumberNode numberNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(TypeNode typeNode)
-        {
-            throw new NotImplementedException();
-        }
-
         public void Visit(ProcedureNode node)
         {
-        }
-
-        public void Visit(ParameterNode node)
-        {
-            throw new NotImplementedException();
         }
 
         public void Visit(ProcedureCallNode node)
@@ -131,7 +115,9 @@ namespace LSBASI3
             memoryScope = procedureMemory;
             var myScope = currentScope;
             currentScope = procedure.Scope;
-
+#if DEBUG
+            AddScopes();
+#endif
             procedure.Reference.Block.Accept(this);
 
             currentScope = myScope;
@@ -177,7 +163,7 @@ namespace LSBASI3
             }
             catch (InvalidOperationException ex)
             {
-                throw new InvalidOperationException($"Unsupported value {value} for operation {node.Type.ToString()}");
+                throw new InvalidOperationException($"Unsupported value {value} for operation {node.Type.ToString()}", ex);
             }
 
             switch (node.Type)
@@ -232,6 +218,48 @@ namespace LSBASI3
             throw new Exception();
         }
 
+#if DEBUG
+
+        private void AddScopes()
+        {
+            Scopes.Add(currentScope);
+            ScopedMemories.Add(memoryScope);
+        }
+
+#endif
+
+        #region unused methods
+
+        public void Visit(ParameterNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(VariableNode variableNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(BinaryOperationNode binaryOperationNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(UnaryOperationNode unaryOperationNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(NumberNode numberNode)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(TypeNode typeNode)
+        {
+            throw new NotImplementedException();
+        }
+
         public TypedValue Evaluate(TypeNode node)
         {
             throw new NotImplementedException();
@@ -281,5 +309,7 @@ namespace LSBASI3
         {
             throw new NotImplementedException();
         }
+
+        #endregion unused methods
     }
 }

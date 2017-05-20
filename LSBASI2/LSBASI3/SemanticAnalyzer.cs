@@ -127,7 +127,7 @@ namespace LSBASI3
 
             var valueType = node.Result.Yield(this);
 
-            if (valueType != variable.Type && !valueType.CanCastTo(variable.Type))
+            if (!TypeChecker.AreCompatible(variable.Type, valueType))
             {
                 throw new TypeAccessException(
                     $"Cannot assign value of type {valueType} to variable {variable}");
@@ -193,6 +193,8 @@ namespace LSBASI3
             return TypeChecker.CheckBinaryOperation(node.Type, leftType, rightType);
         }
 
+        #region unused methods
+
         public TypeSymbol Evaluate(TypeNode node)
         {
             throw new NotImplementedException();
@@ -242,5 +244,7 @@ namespace LSBASI3
         {
             throw new NotImplementedException();
         }
+
+        #endregion unused methods
     }
 }

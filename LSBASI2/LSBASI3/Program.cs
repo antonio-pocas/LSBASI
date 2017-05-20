@@ -12,7 +12,8 @@ namespace LSBASI3
         {
             //var x = Console.ReadLine();
             var x = @"program Main;
-   var x, y, tempum, tempdois: real;
+   var x, y, tempum, tempdois : real;
+   var aaa, bbb : integer;
 
    procedure Alpha(double : real; int: integer);
       var y : integer;
