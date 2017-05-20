@@ -32,9 +32,13 @@ namespace LSBASI3
         public static ScopedSymbolTable CreateProgramScope(string programName)
         {
             var builtins = CreateBuiltinsDictionary();
-            builtins.Add(programName, Symbol.Program(programName));
+            var programScope = new ScopedSymbolTable(programName, builtins);
+            var globalScope = new ScopedSymbolTable("Global", 1, programScope);
 
-            return new ScopedSymbolTable(programName, builtins);
+            var program = new ProgramSymbol(programName, globalScope);
+            builtins.Add(programName, program);
+
+            return globalScope;
         }
 
         private static Dictionary<string, Symbol> CreateBuiltinsDictionary()

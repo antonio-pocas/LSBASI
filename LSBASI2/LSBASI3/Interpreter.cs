@@ -10,15 +10,15 @@ namespace LSBASI3
     public class Interpreter : IVisitor, IEvaluator<TypedValue>
     {
         private readonly AstNode rootNode;
-        private readonly ScopedSymbolTable scopedSymbolTable;
-        private readonly ScopedMemory scopedMemory;
+        private ScopedSymbolTable currentScope;
+        private ScopedMemory memoryScope;
 
         public Interpreter(Parser parser, SemanticAnalyzer semanticAnalyzer)
         {
             var node = parser.Parse();
             this.rootNode = node;
-            this.scopedSymbolTable = semanticAnalyzer.Analyze(node);
-            this.scopedMemory = ScopedMemory.ProgramMemory(node.Name);
+            this.currentScope = semanticAnalyzer.Analyze(node);
+            this.memoryScope = ScopedMemory.ProgramMemory(node.Name);
         }
 
         public void Interpret()
@@ -28,6 +28,8 @@ namespace LSBASI3
 
         public void Visit(ProgramNode node)
         {
+            var program = currentScope.Lookup<ProgramSymbol>(node.Name);
+            currentScope = program.Scope;
             node.Block.Accept(this);
         }
 
@@ -61,7 +63,7 @@ namespace LSBASI3
         {
             var name = node.Variable.Name;
             var result = node.Result.Yield(this);
-            var variable = scopedSymbolTable.Lookup<TypedSymbol>(name);
+            var variable = currentScope.Lookup<TypedSymbol>(name);
 
             if (variable.Type != result.Type)
             {
@@ -73,7 +75,7 @@ namespace LSBASI3
                 result = variable.Type.Cast(result);
             }
 
-            scopedMemory[name] = result;
+            memoryScope[name] = result;
         }
 
         public void Visit(VariableNode variableNode)
@@ -112,7 +114,25 @@ namespace LSBASI3
 
         public void Visit(ProcedureCallNode node)
         {
-            throw new NotImplementedException();
+            var name = node.Name;
+            var procedure = currentScope.Lookup<ProcedureSymbol>(name);
+            var parameters = procedure.Parameters;
+            var arguments = node.Arguments;
+
+            var procedureMemory = new ScopedMemory(name, memoryScope.Level + 1, memoryScope);
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                procedureMemory[parameters[i].Name] = arguments[i].Yield(this);
+            }
+
+            memoryScope = procedureMemory;
+            var myScope = currentScope;
+            currentScope = procedure.Scope;
+
+            procedure.Reference.Block.Accept(this);
+
+            currentScope = myScope;
+            memoryScope = procedureMemory.EnclosingScope;
         }
 
         public TypedValue Evaluate(NumberNode node)
@@ -133,7 +153,7 @@ namespace LSBASI3
         public TypedValue Evaluate(VariableNode node)
         {
             var name = node.Name;
-            var value = scopedMemory[name];
+            var value = memoryScope[name];
 
             if (value == null)
             {

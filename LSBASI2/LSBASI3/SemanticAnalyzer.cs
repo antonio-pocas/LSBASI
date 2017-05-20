@@ -22,8 +22,7 @@ namespace LSBASI3
 
         public void Visit(ProgramNode node)
         {
-            var programScope = ScopedSymbolTable.CreateProgramScope(node.Name);
-            currentScope = new ScopedSymbolTable("Global", 1, programScope);
+            currentScope = ScopedSymbolTable.CreateProgramScope(node.Name);
             node.Block.Accept(this);
 
             currentScope = currentScope.EnclosingScope;

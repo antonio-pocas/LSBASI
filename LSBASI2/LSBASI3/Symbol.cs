@@ -19,18 +19,6 @@ namespace LSBASI3
         {
             return Name;
         }
-
-        public static Symbol Program(string name)
-        {
-            return new ProgramSymbol(name);
-        }
-
-        private class ProgramSymbol : Symbol
-        {
-            public ProgramSymbol(string name) : base(name)
-            {
-            }
-        }
     }
 
     public abstract class TypeSymbol : Symbol
@@ -49,6 +37,16 @@ namespace LSBASI3
             {
                 throw new InvalidCastException($"Cannot cast from {to} to {this}");
             }
+        }
+    }
+
+    public class ProgramSymbol : Symbol
+    {
+        public ScopedSymbolTable Scope { get; set; }
+
+        public ProgramSymbol(string name, ScopedSymbolTable scope) : base(name)
+        {
+            Scope = scope;
         }
     }
 
@@ -218,13 +216,13 @@ namespace LSBASI3
     {
         public List<VarSymbol> Parameters { get; set; }
         public ScopedSymbolTable Scope { get; set; }
-        public ProcedureNode ProcedureReference { get; set; }
+        public ProcedureNode Reference { get; set; }
 
         public ProcedureSymbol(string name, List<VarSymbol> parameters, ScopedSymbolTable scope, ProcedureNode procedure) : base(name)
         {
             Parameters = parameters;
             Scope = scope;
-            ProcedureReference = procedure;
+            Reference = procedure;
         }
     }
 

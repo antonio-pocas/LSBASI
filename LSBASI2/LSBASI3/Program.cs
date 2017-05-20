@@ -12,7 +12,7 @@ namespace LSBASI3
         {
             //var x = Console.ReadLine();
             var x = @"program Main;
-   var x, y: real;
+   var x, y, tempum, tempdois: real;
 
    procedure Alpha(double : real; int: integer);
       var y : integer;
@@ -20,12 +20,13 @@ namespace LSBASI3
    begin
       z := double + 2;
       y := int + 2;
-      x :=  x + y;
+      tempum := z;
+      tempdois := y;
    end;
 
 begin { Main }
     y := 2 + 40;
-    Alpha(1, 2.2);
+    Alpha(123.456, 2);
 end.  { Main }";
 
             var lexer = new Lexer(x);
