@@ -30,6 +30,7 @@ namespace LSBASI3
         {
             var program = currentScope.Lookup<ProgramSymbol>(node.Name);
             currentScope = program.Scope;
+            memoryScope = new ScopedMemory("Global", 1, memoryScope);
             node.Block.Accept(this);
         }
 
@@ -63,7 +64,9 @@ namespace LSBASI3
         {
             var name = node.Variable.Name;
             var result = node.Result.Yield(this);
-            var variable = currentScope.Lookup<TypedSymbol>(name);
+            var variableInfo = currentScope.LookupInfo<TypedSymbol>(name);
+
+            var variable = variableInfo.Symbol;
 
             if (variable.Type != result.Type)
             {
@@ -75,7 +78,7 @@ namespace LSBASI3
                 result = variable.Type.Cast(result);
             }
 
-            memoryScope[name] = result;
+            memoryScope.AddAtLevel(name, result, variableInfo.ScopeLevel);
         }
 
         public void Visit(VariableNode variableNode)

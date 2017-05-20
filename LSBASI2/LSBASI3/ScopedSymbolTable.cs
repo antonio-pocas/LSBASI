@@ -95,5 +95,40 @@ namespace LSBASI3
             table.TryGetValue(name, out symbol);
             return symbol;
         }
+
+        public SymbolInformation<T> LookupInfo<T>(string name)
+            where T : Symbol
+        {
+            Symbol symbol;
+            if (table.TryGetValue(name, out symbol))
+            {
+                var actualSymbol = symbol as T;
+                if (actualSymbol == null)
+                {
+                    throw new Exception($"Symbol type error for symbol {symbol.Name}, expected {typeof(T).Name}, got {symbol.GetType()}");
+                }
+                return new SymbolInformation<T>(actualSymbol, Level);
+            }
+
+            if (EnclosingScope != null)
+            {
+                return EnclosingScope.LookupInfo<T>(name);
+            }
+
+            throw new Exception($"Symbol {name} not present in current scope");
+        }
+    }
+
+    public sealed class SymbolInformation<T>
+        where T : Symbol
+    {
+        public T Symbol { get; }
+        public int ScopeLevel { get; }
+
+        public SymbolInformation(T symbol, int scopeLevel)
+        {
+            Symbol = symbol;
+            ScopeLevel = scopeLevel;
+        }
     }
 }

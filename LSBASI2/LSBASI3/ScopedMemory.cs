@@ -40,5 +40,23 @@ namespace LSBASI3
         {
             return new ScopedMemory(programName, 0, null);
         }
+
+        public void AddAtLevel(string name, TypedValue value, int scopeLevel)
+        {
+            if (scopeLevel > Level)
+            {
+                throw new AccessViolationException(
+                    $"Cannot write in memory scope deeper than the current level. Requested {scopeLevel} current is {Level}");
+            }
+
+            if (Level == scopeLevel)
+            {
+                memory[name] = value;
+            }
+            else
+            {
+                EnclosingScope.AddAtLevel(name, value, scopeLevel);
+            }
+        }
     }
 }
