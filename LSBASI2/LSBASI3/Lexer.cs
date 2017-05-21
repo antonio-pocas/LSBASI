@@ -15,15 +15,22 @@ namespace LSBASI3
         static Lexer()
         {
             ReservedKeywords = new Dictionary<string, Token>();
+
             AddKeyword(Token.Program());
-            AddKeyword(Token.Procedure());
             AddKeyword(Token.Var());
+            AddKeyword(Token.Procedure());
+            AddKeyword(Token.Function());
+
             AddKeyword(Token.Integer());
             AddKeyword(Token.Real());
+            AddKeyword(Token.Boolean());
+
+            AddKeyword(Token.True());
+            AddKeyword(Token.False());
+            AddKeyword(Token.IntegerDivision());
+
             AddKeyword(Token.Begin());
             AddKeyword(Token.End());
-            AddKeyword(Token.IntegerDivision());
-            AddKeyword(Token.Function());
         }
 
         private static void AddKeyword(Token keyword)
@@ -56,7 +63,7 @@ namespace LSBASI3
 
                 if (CurrentChar == ":" && Peek() == "=")
                 {
-                    Position = Position + 2;
+                    Position += 2;
                     return Token.Assign();
                 }
 
@@ -88,6 +95,42 @@ namespace LSBASI3
                 if (int.TryParse(CurrentChar, out tempValue))
                 {
                     return Number();
+                }
+
+                if (CurrentChar == "=")
+                {
+                    Position++;
+                    return Token.Equals();
+                }
+
+                if (CurrentChar == "<")
+                {
+                    var peek = Peek();
+                    if (peek == ">")
+                    {
+                        Position += 2;
+                        return Token.Differs();
+                    }
+
+                    if (peek == "=")
+                    {
+                        Position += 2;
+                        return Token.LessThanOrEqual();
+                    }
+
+                    Position++;
+                    return Token.LessThan();
+                }
+
+                if (CurrentChar == ">")
+                {
+                    if (Peek() == "=")
+                    {
+                        Position += 2;
+                        return Token.GreaterThanOrEqual();
+                    }
+                    Position++;
+                    return Token.GreaterThan();
                 }
 
                 if (CurrentChar == "*")

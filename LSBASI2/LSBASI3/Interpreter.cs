@@ -87,6 +87,8 @@ namespace LSBASI3
         {
             var name = node.Variable.Name;
             var result = node.Result.Yield(this);
+
+            //TODO use information from static analysis here, try to figure out if we can get rid of AddAtDepth or LookupInfo
             var variableInfo = currentScope.LookupInfo<TypedSymbol>(name);
 
             var variable = variableInfo.Symbol;
@@ -114,14 +116,33 @@ namespace LSBASI3
 
         public void Visit(FunctionCallNode node)
         {
-            //TODO
-            throw new NotImplementedException();
+            var name = node.Name;
+            var function = node.Metadata.Reference as FunctionSymbol;
+            var parameters = function.Parameters;
+            var arguments = node.Arguments;
+
+            var procedureMemory = new StackFrame(name, currentStackFrame.Depth + 1, currentStackFrame);
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                procedureMemory[parameters[i].Name] = arguments[i].Yield(this);
+            }
+
+            currentStackFrame = procedureMemory;
+            var myScope = currentScope;
+            currentScope = function.Scope;
+#if DEBUG
+            AddScopes();
+#endif
+            function.Reference.Block.Accept(this);
+
+            currentScope = myScope;
+            currentStackFrame = procedureMemory.PreviousFrame;
         }
 
         public void Visit(ProcedureCallNode node)
         {
             var name = node.Name;
-            var procedure = currentScope.Lookup<ProcedureSymbol>(name);
+            var procedure = node.Metadata.Reference as ProcedureSymbol;
             var parameters = procedure.Parameters;
             var arguments = node.Arguments;
 
@@ -143,14 +164,24 @@ namespace LSBASI3
             currentStackFrame = procedureMemory.PreviousFrame;
         }
 
+        public void Visit(BooleanNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(ComparisonOperationNode node)
+        {
+            throw new NotImplementedException();
+        }
+
         public TypedValue Evaluate(NumberNode node)
         {
-            if (node.token.Type == TokenType.IntegerConstant)
+            if (node.Token.Type == TokenType.IntegerConstant)
             {
                 return new TypedValue(BuiltinType.Integer, int.Parse(node.Value));
             }
 
-            if (node.token.Type == TokenType.RealConstant)
+            if (node.Token.Type == TokenType.RealConstant)
             {
                 return new TypedValue(BuiltinType.Real, double.Parse(node.Value, CultureInfo.InvariantCulture));
             }
@@ -175,15 +206,7 @@ namespace LSBASI3
         {
             var value = node.Child.Yield(this);
 
-            NumberTypeSymbol type;
-            try
-            {
-                type = TypeChecker.CheckUnaryOperation(value.Type);
-            }
-            catch (InvalidOperationException ex)
-            {
-                throw new InvalidOperationException($"Unsupported value {value} for operation {node.Type.ToString()}", ex);
-            }
+            var type = value.Type as NumberTypeSymbol;
 
             switch (node.Type)
             {
@@ -202,15 +225,7 @@ namespace LSBASI3
             var leftValue = node.Left.Yield(this);
             var rightValue = node.Right.Yield(this);
 
-            NumberTypeSymbol numberType;
-            try
-            {
-                numberType = TypeChecker.CheckBinaryOperation(node.Type, leftValue.Type, rightValue.Type);
-            }
-            catch (TypeAccessException ex)
-            {
-                throw new InvalidOperationException($"Cannot perform operation {node.Type.ToString()} between value {leftValue} and {rightValue}", ex);
-            }
+            var numberType = node.Metadata.Type as NumberTypeSymbol;
 
             switch (node.Type)
             {
@@ -224,10 +239,6 @@ namespace LSBASI3
                     return numberType.Multiply(leftValue, rightValue);
 
                 case BinaryOperationType.IntegerDivision:
-                    if (numberType != BuiltinType.Integer)
-                    {
-                        throw new InvalidOperationException($"Integer division may only be done on integers");
-                    }
                     return BuiltinType.Integer.Divide(leftValue, rightValue);
 
                 case BinaryOperationType.RealDivision:
@@ -247,7 +258,7 @@ namespace LSBASI3
         public TypedValue Evaluate(FunctionCallNode node)
         {
             var name = node.Name;
-            var function = currentScope.Lookup<FunctionSymbol>(name);
+            var function = node.Metadata.Reference as FunctionSymbol;
             var parameters = function.Parameters;
             var arguments = node.Arguments;
 
@@ -271,6 +282,67 @@ namespace LSBASI3
             currentStackFrame = functionStackFrame.PreviousFrame;
 
             return result;
+        }
+
+        public TypedValue Evaluate(BooleanNode node)
+        {
+            if (node.Token.Type == TokenType.True)
+            {
+                return BooleanOperations.True();
+            }
+
+            if (node.Token.Type == TokenType.False)
+            {
+                return BooleanOperations.False();
+            }
+
+            throw new Exception("Boolean must be true or false");
+        }
+
+        public TypedValue Evaluate(ComparisonOperationNode node)
+        {
+            var left = node.Left.Yield(this);
+            var right = node.Right.Yield(this);
+
+            if (node.Type == ComparisonOperationType.Equals)
+            {
+                return left.Type.Equals(left, right);
+            }
+
+            if (node.Type == ComparisonOperationType.Differs)
+            {
+                return left.Type.Differs(left, right);
+            }
+
+            var leftAsReal = left.Type as RealSymbol;
+            var rightAsReal = right.Type as RealSymbol;
+            NumberTypeSymbol finalType;
+            if (leftAsReal != null || (rightAsReal != null))
+            {
+                finalType = BuiltinType.Real;
+            }
+            else
+            {
+                finalType = BuiltinType.Integer;
+            }
+
+            switch (node.Type)
+            {
+                case ComparisonOperationType.GreaterThan:
+                    return finalType.GreaterThan(left, right);
+
+                case ComparisonOperationType.GreaterThanOrEqual:
+                    return finalType.GreaterThanOrEqual(left, right);
+
+                case ComparisonOperationType.LessThan:
+                    return finalType.LessThan(left, right);
+
+                case ComparisonOperationType.LessThanOrEqual:
+                    return finalType.LessThanOrEqual(left, right);
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
 #if DEBUG

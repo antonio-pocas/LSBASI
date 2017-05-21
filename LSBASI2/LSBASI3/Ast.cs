@@ -7,17 +7,26 @@ using System.Threading.Tasks;
 
 namespace LSBASI3
 {
+    public class NodeMetadata
+    {
+        public TypeSymbol Type { get; set; }
+        public Symbol Reference { get; set; }
+    }
+
     public abstract class AstNode
     {
-        public Token token;
+        public readonly Token Token;
+        public NodeMetadata Metadata { get; set; }
 
         public AstNode()
         {
+            Metadata = new NodeMetadata();
         }
 
         public AstNode(Token token)
         {
-            this.token = token;
+            Metadata = new NodeMetadata();
+            this.Token = token;
         }
 
         public abstract void Accept(IVisitor visitor);
@@ -338,6 +347,55 @@ namespace LSBASI3
         }
     }
 
+    public class ComparisonOperationNode : AstNode
+    {
+        public AstNode Left { get; set; }
+        public AstNode Right { get; set; }
+        public ComparisonOperationType Type { get; set; }
+
+        public ComparisonOperationNode(Token token, AstNode left, AstNode right) : base(token)
+        {
+            this.Left = left;
+            this.Right = right;
+            switch (token.Type)
+            {
+                case TokenType.Equals:
+                    this.Type = ComparisonOperationType.Equals;
+                    break;
+
+                case TokenType.Differs:
+                    this.Type = ComparisonOperationType.Differs;
+                    break;
+
+                case TokenType.GreaterThan:
+                    this.Type = ComparisonOperationType.GreaterThan;
+                    break;
+
+                case TokenType.GreaterThanOrEqual:
+                    this.Type = ComparisonOperationType.GreaterThanOrEqual;
+                    break;
+
+                case TokenType.LessThan:
+                    this.Type = ComparisonOperationType.LessThan;
+                    break;
+
+                case TokenType.LessThanOrEqual:
+                    this.Type = ComparisonOperationType.LessThanOrEqual;
+                    break;
+            }
+        }
+
+        public override T Yield<T>(IEvaluator<T> evaluator)
+        {
+            return evaluator.Evaluate(this);
+        }
+
+        public override void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+    }
+
     public class UnaryOperationNode : AstNode
     {
         public AstNode Child { get; set; }
@@ -389,6 +447,36 @@ namespace LSBASI3
         }
     }
 
+    public class BooleanNode : AstNode
+    {
+        public bool Value { get; set; }
+
+        public BooleanNode(Token token, bool value) : base(token)
+        {
+            Value = value;
+        }
+
+        public override T Yield<T>(IEvaluator<T> evaluator)
+        {
+            return evaluator.Evaluate(this);
+        }
+
+        public override void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+    }
+
+    public enum ComparisonOperationType
+    {
+        Equals,
+        Differs,
+        GreaterThan,
+        GreaterThanOrEqual,
+        LessThan,
+        LessThanOrEqual,
+    }
+
     public enum BinaryOperationType
     {
         Add,
@@ -437,6 +525,10 @@ namespace LSBASI3
         void Visit(ParameterNode node);
 
         void Visit(ProcedureCallNode node);
+
+        void Visit(BooleanNode node);
+
+        void Visit(ComparisonOperationNode node);
     }
 
     public interface IEvaluator<T>
@@ -472,5 +564,9 @@ namespace LSBASI3
         T Evaluate(FunctionNode node);
 
         T Evaluate(FunctionCallNode node);
+
+        T Evaluate(BooleanNode node);
+
+        T Evaluate(ComparisonOperationNode node);
     }
 }

@@ -146,6 +146,16 @@ namespace LSBASI3
             AppendIndented($"{node.Name}.Execute({argumentString})");
         }
 
+        public void Visit(BooleanNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(ComparisonOperationNode node)
+        {
+            throw new NotImplementedException();
+        }
+
         public void Visit(CompoundNode node)
         {
             foreach (var child in node.Children)
@@ -177,12 +187,12 @@ namespace LSBASI3
 
         public string Evaluate(UnaryOperationNode node)
         {
-            return node.token.Value + node.Child.Yield(this);
+            return node.Token.Value + node.Child.Yield(this);
         }
 
         public string Evaluate(BinaryOperationNode node)
         {
-            var operation = node.Type == BinaryOperationType.IntegerDivision ? "/" : node.token.Value;
+            var operation = node.Type == BinaryOperationType.IntegerDivision ? "/" : node.Token.Value;
             return $"{node.Left.Yield(this)} {operation} {node.Right.Yield(this)}";
         }
 
@@ -201,6 +211,16 @@ namespace LSBASI3
             var arguments = node.Arguments.Select(x => x.Yield(this));
             var argumentString = string.Join(", ", arguments);
             return $"{node.Name}.Execute({argumentString})";
+        }
+
+        public string Evaluate(BooleanNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string Evaluate(ComparisonOperationNode node)
+        {
+            throw new NotImplementedException();
         }
 
         #region unused methods

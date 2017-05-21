@@ -14,6 +14,7 @@ namespace LSBASI3
             var x = @"program Main;
    var x, y, tempum, tempdois : real;
    var aaa, bbb, testeste : integer;
+   var abcdef, bool : boolean;
 
    procedure Alpha(Alpha : real; int: integer);
       var y : integer;
@@ -42,13 +43,14 @@ begin { Main }
       {bbb := 234;}
     y := 2 + 40 + plustwo(5) + one;
     Alpha(123.456, 2);
+abcdef := 4 * 40 + 2 / 3 > 5;
 end.  { Main }";
 
             var lexer = new Lexer(x);
             var parser = new Parser(lexer);
             var node = new Parser(new Lexer(x)).Parse();
-            var translator = new CSharpTranslator(node);
-            var text = translator.Translate();
+            //var translator = new CSharpTranslator(node);
+            //var text = translator.Translate();
             var interpreter = new Interpreter(parser, new ScopedSymbolTableBuilder(), new SemanticAnalyzer(), new AssignmentAnalyzer());
             interpreter.Interpret();
 

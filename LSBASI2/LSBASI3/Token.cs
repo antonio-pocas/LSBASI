@@ -135,6 +135,51 @@
         {
             return new Token(TokenType.Real, "REAL");
         }
+
+        public static Token Boolean()
+        {
+            return new Token(TokenType.Boolean, "BOOLEAN");
+        }
+
+        public static Token True()
+        {
+            return new Token(TokenType.True, "TRUE");
+        }
+
+        public static Token False()
+        {
+            return new Token(TokenType.False, "FALSE");
+        }
+
+        public static Token Equals()
+        {
+            return new Token(TokenType.False, "=");
+        }
+
+        public static Token Differs()
+        {
+            return new Token(TokenType.Differs, "<>");
+        }
+
+        public static Token GreaterThan()
+        {
+            return new Token(TokenType.GreaterThan, ">");
+        }
+
+        public static Token GreaterThanOrEqual()
+        {
+            return new Token(TokenType.GreaterThanOrEqual, ">=");
+        }
+
+        public static Token LessThan()
+        {
+            return new Token(TokenType.LessThan, "<");
+        }
+
+        public static Token LessThanOrEqual()
+        {
+            return new Token(TokenType.LessThanOrEqual, "<=");
+        }
     }
 
     public enum TokenType
@@ -143,25 +188,40 @@
         Procedure,
         Function,
         Var,
+
+        Id,
+
+        LeftParen,
+        RightParen,
         Colon,
         Comma,
+        Semicolon,
+        Assign,
+
         Integer,
         Real,
         IntegerConstant,
         RealConstant,
+        Boolean,
+        True,
+        False,
+
+        Equals,
+        Differs,
+        GreaterThan,
+        GreaterThanOrEqual,
+        LessThan,
+        LessThanOrEqual,
+
         Plus,
         Minus,
         Slash,
         IntegerDivision,
         Star,
-        LeftParen,
-        RightParen,
+
         Begin,
         End,
-        Semicolon,
         Dot,
-        Assign,
-        Id,
         EOF
     }
 }

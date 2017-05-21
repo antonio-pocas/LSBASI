@@ -96,6 +96,8 @@ namespace LSBASI3
                     throw new ArgumentException($"Error in call to {name}, cannot pass argument of type {argumentType} to parameter {parameters[i]}");
                 }
             }
+
+            node.Metadata.Reference = function;
         }
 
         public TypeSymbol Evaluate(FunctionNode node)
@@ -129,6 +131,7 @@ namespace LSBASI3
                 }
             }
 
+            node.Metadata.Reference = function;
             return function.Type;
         }
 
@@ -161,6 +164,39 @@ namespace LSBASI3
                     throw new ArgumentException($"Error in call to {name}, cannot pass argument of type {argumentType} to parameter {parameters[i]}");
                 }
             }
+
+            node.Metadata.Reference = procedure;
+        }
+
+        public void Visit(BooleanNode node)
+        {
+            //TODO??
+            throw new NotImplementedException();
+        }
+
+        public void Visit(ComparisonOperationNode node)
+        {
+            //TODO??
+            throw new NotImplementedException();
+        }
+
+        public TypeSymbol Evaluate(BooleanNode node)
+        {
+            return BuiltinType.Boolean;
+        }
+
+        public TypeSymbol Evaluate(ComparisonOperationNode node)
+        {
+            var left = node.Left.Yield(this);
+            var right = node.Right.Yield(this);
+
+            if (!TypeChecker.CheckComparisonOperation(node.Type, left, right))
+            {
+                throw new InvalidOperationException(
+                    $"Cannot perform comparison {node.Type.ToString()} between types {left} and {right}");
+            }
+
+            return BuiltinType.Boolean;
         }
 
         public void Visit(CompoundNode node)
@@ -186,6 +222,8 @@ namespace LSBASI3
                 }
                 throw new Exception($"Use of undeclared variable {name}");
             }
+
+            variableNode.Metadata.Reference = variable;
         }
 
         public void Visit(NoOpNode node)
@@ -194,19 +232,8 @@ namespace LSBASI3
 
         public void Visit(AssignmentNode node)
         {
-            var name = node.Variable.Name;
-            var symbol = currentScope.Lookup(name);
-
-            var variable = symbol as VarSymbol;
-
-            if (variable == null)
-            {
-                if (symbol != null)
-                {
-                    throw new Exception($"Cannot assign value to symbol {symbol}");
-                }
-                throw new Exception($"Use of undeclared variable {name}");
-            }
+            node.Variable.Accept(this);
+            var variable = node.Variable.Metadata.Reference as VarSymbol;
 
             node.Result = FixParenlessFunctionCalls(node.Result);
 
@@ -221,12 +248,12 @@ namespace LSBASI3
 
         public TypeSymbol Evaluate(NumberNode node)
         {
-            if (node.token.Type == TokenType.IntegerConstant)
+            if (node.Token.Type == TokenType.IntegerConstant)
             {
                 return BuiltinType.Integer;
             }
 
-            if (node.token.Type == TokenType.RealConstant)
+            if (node.Token.Type == TokenType.RealConstant)
             {
                 return BuiltinType.Real;
             }
@@ -243,6 +270,8 @@ namespace LSBASI3
                 throw new TypeAccessException($"Use of undeclared variable or function {name}");
             }
 
+            node.Metadata.Reference = variable;
+
             return variable.Type;
         }
 
@@ -250,7 +279,11 @@ namespace LSBASI3
         {
             node.Child = FixParenlessFunctionCalls(node.Child);
             var type = node.Child.Yield(this);
-            return TypeChecker.CheckUnaryOperation(type);
+
+            var resultType = TypeChecker.CheckUnaryOperation(type);
+
+            node.Metadata.Type = resultType;
+            return resultType;
         }
 
         public TypeSymbol Evaluate(BinaryOperationNode node)
@@ -261,7 +294,10 @@ namespace LSBASI3
             var leftType = node.Left.Yield(this);
             var rightType = node.Right.Yield(this);
 
-            return TypeChecker.CheckBinaryOperation(node.Type, leftType, rightType);
+            var resultType = TypeChecker.CheckBinaryOperation(node.Type, leftType, rightType);
+            node.Metadata.Type = resultType;
+
+            return resultType;
         }
 
         private AstNode FixParenlessFunctionCalls(AstNode node)
@@ -352,5 +388,82 @@ namespace LSBASI3
         }
 
         #endregion unused methods
+    }
+
+    public static class TypeChecker
+    {
+        public static bool AreCompatible(TypeSymbol expected, TypeSymbol actual)
+        {
+            return expected == actual || actual.CanCastTo(expected);
+        }
+
+        public static bool AreComparable(TypeSymbol left, TypeSymbol right)
+        {
+            return left == right || right.CanCastTo(left) || left.CanCastTo(right);
+        }
+
+        public static bool CheckComparisonOperation(ComparisonOperationType operation, TypeSymbol left, TypeSymbol right)
+        {
+            if (!TypeChecker.AreComparable(left, right))
+            {
+                return false;
+            }
+
+            if (operation == ComparisonOperationType.Equals || operation == ComparisonOperationType.Differs)
+            {
+                return true;
+            }
+
+            var leftAsNumber = left as NumberTypeSymbol;
+            var rightAsNumber = right as NumberTypeSymbol;
+
+            return leftAsNumber != null && rightAsNumber != null;
+        }
+
+        public static NumberTypeSymbol CheckBinaryOperation(BinaryOperationType operation, TypeSymbol left, TypeSymbol right)
+        {
+            var leftAsNumber = left as NumberTypeSymbol;
+            var rightAsNumber = right as NumberTypeSymbol;
+
+            if (leftAsNumber == null || rightAsNumber == null)
+            {
+                throw new TypeAccessException($"Cannot perform operation {operation.ToString()} between types {left} and {right}");
+            }
+
+            if (operation == BinaryOperationType.IntegerDivision
+                && (leftAsNumber == BuiltinType.Real || rightAsNumber == BuiltinType.Real))
+            {
+                throw new TypeAccessException($"Cannot perform operation {BinaryOperationType.IntegerDivision.ToString()} between types {left} and {right}");
+            }
+
+            if (operation == BinaryOperationType.RealDivision)
+            {
+                return BuiltinType.Real;
+            }
+
+            if (leftAsNumber == rightAsNumber || rightAsNumber.CanCastTo(leftAsNumber))
+            {
+                return leftAsNumber;
+            }
+
+            if (leftAsNumber.CanCastTo(rightAsNumber))
+            {
+                return rightAsNumber;
+            }
+
+            throw new TypeAccessException($"Cannot perform operation {operation.ToString()} between types {left} and {right}");
+        }
+
+        public static NumberTypeSymbol CheckUnaryOperation(TypeSymbol type)
+        {
+            var numberType = type as NumberTypeSymbol;
+
+            if (numberType == null)
+            {
+                throw new TypeAccessException($"Cannot perform a unary operation on the type {type}");
+            }
+
+            return numberType;
+        }
     }
 }

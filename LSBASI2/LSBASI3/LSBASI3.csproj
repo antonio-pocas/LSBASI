@@ -59,6 +59,7 @@
     <Compile Include="ScopedSymbolTable.cs" />
     <Compile Include="Token.cs" />
     <Compile Include="TypedValue.cs" />
+    <Compile Include="TypeSymbols.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

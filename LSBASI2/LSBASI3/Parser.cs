@@ -15,19 +15,22 @@ namespace LSBASI3
     /// FormalParameterList:        FormalParameters | FormalParameters SEMI FormalParameterList
     /// FormalParameters:           ID (COMMA ID)* COLON TypeSpecification
     /// VariableDeclaration:        ID (COMMA ID)* COLON TypeSpecification
-    /// TypeSpecification:          INTEGER | REAL
+    /// TypeSpecification:          INTEGER | REAL | BOOLEAN
     /// CompoundStatement:          BEGIN StatementList END
     /// StatementList:              Statement | Statement SEMI StatementList
     /// Statement:                  CompoundStatement | AssignmentStatement | ProcedureStatement | EmptyRule
     /// ProcedureStatement:         Variable (LPAREN (Expr)+ RPAREN)?
     /// AssignmentStatement:        Variable ASSIGN Expr
     /// EmptyRule:
-    /// Expr:                       Term ((PLUS|MINUS) Term)*
+    /// Expr:                       Expression ((EQ|DIFF|GT|GTE|LT|LTE) Expression)?
+    /// Expression:                 Term ((PLUS|MINUS) Term)*
     /// Term:                       Factor ((MUL|REAL_DIV|INTEGER_DIV) Factor)*
     /// Factor:                     PLUS Factor
     ///                           | MINUS Factor
     ///                           | INTEGER_CONST
     ///                           | REAL_CONST
+    ///                           | TRUE
+    ///                           | FALSE
     ///                           | LPAREN Expr RPAREN
     ///                           | Variable
     ///                           | Function
@@ -242,7 +245,13 @@ namespace LSBASI3
                 return new TypeNode(token);
             }
 
-            Eat(TokenType.Real);
+            if (CurrentToken.Type == TokenType.Real)
+            {
+                Eat(TokenType.Real);
+                return new TypeNode(token);
+            }
+
+            Eat(TokenType.Boolean);
             return new TypeNode(token);
         }
 
@@ -339,6 +348,55 @@ namespace LSBASI3
 
         private AstNode Expr()
         {
+            var result = Expression();
+
+            if (CurrentToken.Type == TokenType.Equals)
+            {
+                var token = CurrentToken;
+                Eat(TokenType.Equals);
+                return new ComparisonOperationNode(token, result, Expression());
+            }
+
+            if (CurrentToken.Type == TokenType.Differs)
+            {
+                var token = CurrentToken;
+                Eat(TokenType.Differs);
+                return new ComparisonOperationNode(token, result, Expression());
+            }
+
+            if (CurrentToken.Type == TokenType.GreaterThan)
+            {
+                var token = CurrentToken;
+                Eat(TokenType.GreaterThan);
+                return new ComparisonOperationNode(token, result, Expression());
+            }
+
+            if (CurrentToken.Type == TokenType.GreaterThanOrEqual)
+            {
+                var token = CurrentToken;
+                Eat(TokenType.GreaterThanOrEqual);
+                return new ComparisonOperationNode(token, result, Expression());
+            }
+
+            if (CurrentToken.Type == TokenType.LessThan)
+            {
+                var token = CurrentToken;
+                Eat(TokenType.LessThan);
+                return new ComparisonOperationNode(token, result, Expression());
+            }
+
+            if (CurrentToken.Type == TokenType.LessThanOrEqual)
+            {
+                var token = CurrentToken;
+                Eat(TokenType.LessThanOrEqual);
+                return new ComparisonOperationNode(token, result, Expression());
+            }
+
+            return result;
+        }
+
+        private AstNode Expression()
+        {
             var result = Term();
             while (exprOperationTokens.Contains(CurrentToken.Type))
             {
@@ -412,6 +470,20 @@ namespace LSBASI3
             {
                 var value = new NumberNode(CurrentToken);
                 Eat(TokenType.RealConstant);
+                return value;
+            }
+
+            if (CurrentToken.Type == TokenType.True)
+            {
+                var value = new BooleanNode(CurrentToken, true);
+                Eat(TokenType.True);
+                return value;
+            }
+
+            if (CurrentToken.Type == TokenType.False)
+            {
+                var value = new BooleanNode(CurrentToken, false);
+                Eat(TokenType.False);
                 return value;
             }
 

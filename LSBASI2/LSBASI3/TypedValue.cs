@@ -76,6 +76,54 @@ namespace LSBASI3
 
             return IntegerValue(-actual);
         }
+
+        public static TypedValue Equals(TypedValue left, TypedValue right)
+        {
+            var leftValue = Convert.ToInt32(left.Value);
+            var rightValue = Convert.ToInt32(right.Value);
+
+            return BooleanOperations.BooleanValue(leftValue == rightValue);
+        }
+
+        public static TypedValue Differs(TypedValue left, TypedValue right)
+        {
+            var leftValue = Convert.ToInt32(left.Value);
+            var rightValue = Convert.ToInt32(right.Value);
+
+            return BooleanOperations.BooleanValue(leftValue != rightValue);
+        }
+
+        public static TypedValue GreaterThan(TypedValue left, TypedValue right)
+        {
+            var leftValue = Convert.ToInt32(left.Value);
+            var rightValue = Convert.ToInt32(right.Value);
+
+            return BooleanOperations.BooleanValue(leftValue > rightValue);
+        }
+
+        public static TypedValue GreaterThanOrEqual(TypedValue left, TypedValue right)
+        {
+            var leftValue = Convert.ToInt32(left.Value);
+            var rightValue = Convert.ToInt32(right.Value);
+
+            return BooleanOperations.BooleanValue(leftValue >= rightValue);
+        }
+
+        public static TypedValue LessThan(TypedValue left, TypedValue right)
+        {
+            var leftValue = Convert.ToInt32(left.Value);
+            var rightValue = Convert.ToInt32(right.Value);
+
+            return BooleanOperations.BooleanValue(leftValue < rightValue);
+        }
+
+        public static TypedValue LessThanOrEqual(TypedValue left, TypedValue right)
+        {
+            var leftValue = Convert.ToInt32(left.Value);
+            var rightValue = Convert.ToInt32(right.Value);
+
+            return BooleanOperations.BooleanValue(leftValue <= rightValue);
+        }
     }
 
     public static class RealOperations
@@ -130,59 +178,87 @@ namespace LSBASI3
 
             return RealValue(-actual);
         }
+
+        public static TypedValue Equals(TypedValue left, TypedValue right)
+        {
+            var leftValue = Convert.ToDouble(left.Value);
+            var rightValue = Convert.ToDouble(right.Value);
+
+            return BooleanOperations.BooleanValue(leftValue == rightValue);
+        }
+
+        public static TypedValue Differs(TypedValue left, TypedValue right)
+        {
+            var leftValue = Convert.ToDouble(left.Value);
+            var rightValue = Convert.ToDouble(right.Value);
+
+            return BooleanOperations.BooleanValue(leftValue != rightValue);
+        }
+
+        public static TypedValue GreaterThan(TypedValue left, TypedValue right)
+        {
+            var leftValue = Convert.ToDouble(left.Value);
+            var rightValue = Convert.ToDouble(right.Value);
+
+            return BooleanOperations.BooleanValue(leftValue > rightValue);
+        }
+
+        public static TypedValue GreaterThanOrEqual(TypedValue left, TypedValue right)
+        {
+            var leftValue = Convert.ToDouble(left.Value);
+            var rightValue = Convert.ToDouble(right.Value);
+
+            return BooleanOperations.BooleanValue(leftValue >= rightValue);
+        }
+
+        public static TypedValue LessThan(TypedValue left, TypedValue right)
+        {
+            var leftValue = Convert.ToDouble(left.Value);
+            var rightValue = Convert.ToDouble(right.Value);
+
+            return BooleanOperations.BooleanValue(leftValue < rightValue);
+        }
+
+        public static TypedValue LessThanOrEqual(TypedValue left, TypedValue right)
+        {
+            var leftValue = Convert.ToDouble(left.Value);
+            var rightValue = Convert.ToDouble(right.Value);
+
+            return BooleanOperations.BooleanValue(leftValue <= rightValue);
+        }
     }
 
-    public static class TypeChecker
+    public static class BooleanOperations
     {
-        public static bool AreCompatible(TypeSymbol expected, TypeSymbol actual)
+        public static TypedValue BooleanValue(object value)
         {
-            return expected == actual || actual.CanCastTo(expected);
+            return new TypedValue(BuiltinType.Boolean, value);
         }
 
-        public static NumberTypeSymbol CheckBinaryOperation(BinaryOperationType operation, TypeSymbol left, TypeSymbol right)
+        public static TypedValue True()
         {
-            var leftAsNumber = left as NumberTypeSymbol;
-            var rightAsNumber = right as NumberTypeSymbol;
-
-            if (leftAsNumber == null || rightAsNumber == null)
-            {
-                throw new TypeAccessException($"Cannot perform operation {operation.ToString()} between types {left} and {right}");
-            }
-
-            if (operation == BinaryOperationType.IntegerDivision
-                && (leftAsNumber == BuiltinType.Real || rightAsNumber == BuiltinType.Real))
-            {
-                throw new TypeAccessException($"Cannot perform operation {BinaryOperationType.IntegerDivision.ToString()} between types {left} and {right}");
-            }
-
-            if (operation == BinaryOperationType.RealDivision)
-            {
-                return BuiltinType.Real;
-            }
-
-            if (leftAsNumber == rightAsNumber || rightAsNumber.CanCastTo(leftAsNumber))
-            {
-                return leftAsNumber;
-            }
-
-            if (leftAsNumber.CanCastTo(rightAsNumber))
-            {
-                return rightAsNumber;
-            }
-
-            throw new TypeAccessException($"Cannot perform operation {operation.ToString()} between types {left} and {right}");
+            return new TypedValue(BuiltinType.Boolean, true);
         }
 
-        public static NumberTypeSymbol CheckUnaryOperation(TypeSymbol type)
+        public static TypedValue False()
         {
-            var numberType = type as NumberTypeSymbol;
+            return new TypedValue(BuiltinType.Boolean, false);
+        }
 
-            if (numberType == null)
-            {
-                throw new TypeAccessException($"Cannot perform a unary operation on the type {type}");
-            }
+        public static TypedValue Equals(TypedValue left, TypedValue right)
+        {
+            var leftValue = Convert.ToBoolean(left.Value);
+            var rightValue = Convert.ToBoolean(right.Value);
 
-            return numberType;
+            return BooleanOperations.BooleanValue(leftValue == rightValue);
+        }
+
+        public static TypedValue Differs(TypedValue left, TypedValue right)
+        {
+            var leftValue = Convert.ToBoolean(left.Value);
+            var rightValue = Convert.ToBoolean(right.Value);
+
+            return BooleanOperations.BooleanValue(leftValue != rightValue);
         }
     }
 }

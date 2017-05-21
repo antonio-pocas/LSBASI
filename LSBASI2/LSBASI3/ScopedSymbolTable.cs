@@ -46,7 +46,8 @@ namespace LSBASI3
             return new Dictionary<string, Symbol>
             {
                 {RealSymbol.Keyword, BuiltinType.Real},
-                {IntegerSymbol.Keyword, BuiltinType.Integer}
+                {IntegerSymbol.Keyword, BuiltinType.Integer},
+                {BooleanSymbol.Keyword, BuiltinType.Boolean}
             };
         }
 

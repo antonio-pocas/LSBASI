@@ -122,6 +122,16 @@ namespace LSBASI3
             currentAnalysisScope = myAnalysisScope;
         }
 
+        public void Visit(BooleanNode node)
+        {
+        }
+
+        public void Visit(ComparisonOperationNode node)
+        {
+            node.Left.Accept(this);
+            node.Right.Accept(this);
+        }
+
         public void Visit(FunctionCallNode node)
         {
             var myScope = currentScope;

@@ -126,6 +126,16 @@ namespace LSBASI3
         {
         }
 
+        public void Visit(BooleanNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(ComparisonOperationNode node)
+        {
+            throw new NotImplementedException();
+        }
+
         #region unused methods
 
         public void Visit(TypeNode typeNode)
