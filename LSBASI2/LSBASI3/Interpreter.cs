@@ -95,11 +95,6 @@ namespace LSBASI3
 
             if (variable.Type != result.Type)
             {
-                if (!result.Type.CanCastTo(variable.Type))
-                {
-                    throw new TypeAccessException(
-                        $"Cannot assign value of type {result.Type} to variable {variable}");
-                }
                 result = variable.Type.Cast(result);
             }
 
