@@ -18,7 +18,8 @@ namespace LSBASI3
     /// TypeSpecification:          INTEGER | REAL | BOOLEAN
     /// CompoundStatement:          BEGIN StatementList END
     /// StatementList:              Statement | Statement SEMI StatementList
-    /// Statement:                  CompoundStatement | AssignmentStatement | ProcedureStatement | EmptyRule
+    /// Statement:                  CompoundStatement | If | AssignmentStatement | ProcedureStatement | EmptyRule
+    /// If:                         IF Expr THEN Statement (ELSE Statement)?
     /// ProcedureStatement:         Variable (LPAREN (Expr)+ RPAREN)?
     /// AssignmentStatement:        Variable ASSIGN Expr
     /// EmptyRule:
@@ -287,6 +288,11 @@ namespace LSBASI3
                 return CompoundStatement();
             }
 
+            if (CurrentToken.Type == TokenType.If)
+            {
+                return If();
+            }
+
             if (CurrentToken.Type == TokenType.Id)
             {
                 var lookaheadToken = Lookahead();
@@ -299,6 +305,28 @@ namespace LSBASI3
             }
 
             return EmptyRule();
+        }
+
+        private IfNode If()
+        {
+            Eat(TokenType.If);
+            var condition = Expr();
+
+            Eat(TokenType.Then);
+            var then = Statement();
+            var node = new IfNode(condition, then);
+
+            if (CurrentToken.Type == TokenType.Else || Lookahead().Type == TokenType.Else)
+            {
+                if (CurrentToken.Type == TokenType.Semicolon)
+                {
+                    Eat(TokenType.Semicolon);
+                }
+                Eat(TokenType.Else);
+                node.Else = Statement();
+            }
+
+            return node;
         }
 
         private ProcedureCallNode ProcedureStatement()

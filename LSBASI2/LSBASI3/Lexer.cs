@@ -20,6 +20,9 @@ namespace LSBASI3
             AddKeyword(Token.Var());
             AddKeyword(Token.Procedure());
             AddKeyword(Token.Function());
+            AddKeyword(Token.If());
+            AddKeyword(Token.Then());
+            AddKeyword(Token.Else());
 
             AddKeyword(Token.Integer());
             AddKeyword(Token.Real());

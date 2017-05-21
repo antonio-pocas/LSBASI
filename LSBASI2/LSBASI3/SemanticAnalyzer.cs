@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 
 namespace LSBASI3
@@ -178,6 +179,18 @@ namespace LSBASI3
         {
             //TODO??
             throw new NotImplementedException();
+        }
+
+        public void Visit(IfNode node)
+        {
+            var conditionType = node.Condition.Yield(this);
+            if (conditionType != BuiltinType.Boolean)
+            {
+                throw new InvalidExpressionException("If keyword must always be followed by a boolean expression");
+            }
+
+            node.Then.Accept(this);
+            node.Else?.Accept(this);
         }
 
         public TypeSymbol Evaluate(BooleanNode node)

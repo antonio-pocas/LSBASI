@@ -136,6 +136,10 @@ namespace LSBASI3
             throw new NotImplementedException();
         }
 
+        public void Visit(IfNode node)
+        {
+        }
+
         #region unused methods
 
         public void Visit(TypeNode typeNode)

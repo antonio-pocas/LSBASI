@@ -41,9 +41,14 @@ namespace LSBASI3
         public const string Keyword = "BOOLEAN";
         public static BooleanSymbol Instance { get; }
 
+        public static TypedValue True { get; set; }
+        public static TypedValue False { get; set; }
+
         static BooleanSymbol()
         {
             Instance = new BooleanSymbol(Keyword);
+            True = new TypedValue(Instance, true);
+            False = new TypedValue(Instance, false);
         }
 
         protected BooleanSymbol(string name) : base(name)
@@ -58,6 +63,11 @@ namespace LSBASI3
         public override bool CanCastTo(TypeSymbol type)
         {
             return false;
+        }
+
+        public static bool GetValue(TypedValue value)
+        {
+            return Convert.ToBoolean(value.Value);
         }
 
         public override TypedValue Equals(TypedValue left, TypedValue right)

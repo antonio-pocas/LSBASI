@@ -156,6 +156,11 @@ namespace LSBASI3
             throw new NotImplementedException();
         }
 
+        public void Visit(IfNode node)
+        {
+            throw new NotImplementedException();
+        }
+
         public void Visit(CompoundNode node)
         {
             foreach (var child in node.Children)

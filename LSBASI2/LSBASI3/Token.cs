@@ -41,6 +41,21 @@
             return new Token(TokenType.Var, "VAR");
         }
 
+        public static Token If()
+        {
+            return new Token(TokenType.If, "IF");
+        }
+
+        public static Token Then()
+        {
+            return new Token(TokenType.Then, "THEN");
+        }
+
+        public static Token Else()
+        {
+            return new Token(TokenType.Else, "ELSE");
+        }
+
         public static Token Colon()
         {
             return new Token(TokenType.Colon, ":");
@@ -185,11 +200,15 @@
     public enum TokenType
     {
         Program,
+
+        Id,
         Procedure,
         Function,
         Var,
 
-        Id,
+        If,
+        Then,
+        Else,
 
         LeftParen,
         RightParen,
@@ -222,6 +241,6 @@
         Begin,
         End,
         Dot,
-        EOF
+        EOF,
     }
 }

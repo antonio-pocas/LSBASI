@@ -169,6 +169,20 @@ namespace LSBASI3
             throw new NotImplementedException();
         }
 
+        public void Visit(IfNode node)
+        {
+            var conditionValue = node.Condition.Yield(this);
+            var condition = BooleanSymbol.GetValue(conditionValue);
+            if (condition)
+            {
+                node.Then.Accept(this);
+            }
+            else
+            {
+                node.Else?.Accept(this);
+            }
+        }
+
         public TypedValue Evaluate(NumberNode node)
         {
             if (node.Token.Type == TokenType.IntegerConstant)
@@ -283,12 +297,12 @@ namespace LSBASI3
         {
             if (node.Token.Type == TokenType.True)
             {
-                return BooleanOperations.True();
+                return BooleanSymbol.True;
             }
 
             if (node.Token.Type == TokenType.False)
             {
-                return BooleanOperations.False();
+                return BooleanSymbol.False;
             }
 
             throw new Exception("Boolean must be true or false");

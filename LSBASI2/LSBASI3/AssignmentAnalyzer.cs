@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace LSBASI3
 {
+    // TODO fix this for branching
     public class AssignmentAnalyzer : IVisitor
     {
         private ScopedSymbolTable currentScope;
@@ -130,6 +131,13 @@ namespace LSBASI3
         {
             node.Left.Accept(this);
             node.Right.Accept(this);
+        }
+
+        public void Visit(IfNode node)
+        {
+            node.Condition.Accept(this);
+            node.Then.Accept(this);
+            node.Else?.Accept(this);
         }
 
         public void Visit(FunctionCallNode node)

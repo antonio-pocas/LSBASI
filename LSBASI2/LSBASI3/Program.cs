@@ -44,11 +44,20 @@ begin { Main }
     y := 2 + 40 + plustwo(5) + one;
     Alpha(123.456, 2);
 abcdef := 4 * 40 + 2 / 3 > 5;
+
+if (4 > 3) then
+  begin
+    abcdef := false;
+    y := 6;
+  end;
+else
+    abcdef := true;
+bbb := 1;
 end.  { Main }";
 
             var lexer = new Lexer(x);
             var parser = new Parser(lexer);
-            var node = new Parser(new Lexer(x)).Parse();
+            //var node = new Parser(new Lexer(x)).Parse();
             //var translator = new CSharpTranslator(node);
             //var text = translator.Translate();
             var interpreter = new Interpreter(parser, new ScopedSymbolTableBuilder(), new SemanticAnalyzer(), new AssignmentAnalyzer());

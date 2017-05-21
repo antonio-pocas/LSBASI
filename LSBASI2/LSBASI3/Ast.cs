@@ -228,6 +228,29 @@ namespace LSBASI3
         }
     }
 
+    public class IfNode : AstNode
+    {
+        public AstNode Condition { get; set; }
+        public AstNode Then { get; set; }
+        public AstNode Else { get; set; }
+
+        public IfNode(AstNode condition, AstNode then)
+        {
+            Condition = condition;
+            Then = then;
+        }
+
+        public override void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        public override T Yield<T>(IEvaluator<T> visitor)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class AssignmentNode : AstNode
     {
         public VariableNode Variable { get; set; }
@@ -529,6 +552,8 @@ namespace LSBASI3
         void Visit(BooleanNode node);
 
         void Visit(ComparisonOperationNode node);
+
+        void Visit(IfNode node);
     }
 
     public interface IEvaluator<T>

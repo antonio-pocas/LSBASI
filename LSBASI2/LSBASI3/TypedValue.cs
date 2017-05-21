@@ -235,16 +235,6 @@ namespace LSBASI3
             return new TypedValue(BuiltinType.Boolean, value);
         }
 
-        public static TypedValue True()
-        {
-            return new TypedValue(BuiltinType.Boolean, true);
-        }
-
-        public static TypedValue False()
-        {
-            return new TypedValue(BuiltinType.Boolean, false);
-        }
-
         public static TypedValue Equals(TypedValue left, TypedValue right)
         {
             var leftValue = Convert.ToBoolean(left.Value);
