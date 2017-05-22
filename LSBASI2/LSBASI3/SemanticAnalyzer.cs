@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 
 namespace LSBASI3
@@ -195,7 +196,19 @@ namespace LSBASI3
 
         public TypeSymbol Evaluate(BooleanNode node)
         {
-            return BuiltinType.Boolean;
+            if (node.Token.Type == TokenType.True)
+            {
+                node.Metadata.Value = BooleanSymbol.True;
+                return BuiltinType.Boolean;
+            }
+
+            if (node.Token.Type == TokenType.False)
+            {
+                node.Metadata.Value = BooleanSymbol.False;
+                return BuiltinType.Boolean;
+            }
+
+            throw new Exception("Boolean must be true or false");
         }
 
         public TypeSymbol Evaluate(ComparisonOperationNode node)
@@ -263,11 +276,13 @@ namespace LSBASI3
         {
             if (node.Token.Type == TokenType.IntegerConstant)
             {
+                node.Metadata.Value = new TypedValue(BuiltinType.Integer, int.Parse(node.Value));
                 return BuiltinType.Integer;
             }
 
             if (node.Token.Type == TokenType.RealConstant)
             {
+                node.Metadata.Value = new TypedValue(BuiltinType.Real, double.Parse(node.Value, CultureInfo.InvariantCulture));
                 return BuiltinType.Real;
             }
 

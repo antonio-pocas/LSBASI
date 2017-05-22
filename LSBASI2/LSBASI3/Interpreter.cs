@@ -185,17 +185,7 @@ namespace LSBASI3
 
         public TypedValue Evaluate(NumberNode node)
         {
-            if (node.Token.Type == TokenType.IntegerConstant)
-            {
-                return new TypedValue(BuiltinType.Integer, int.Parse(node.Value));
-            }
-
-            if (node.Token.Type == TokenType.RealConstant)
-            {
-                return new TypedValue(BuiltinType.Real, double.Parse(node.Value, CultureInfo.InvariantCulture));
-            }
-
-            throw new Exception("Unsupported type for number node");
+            return node.Metadata.Value;
         }
 
         public TypedValue Evaluate(VariableNode node)
@@ -295,17 +285,7 @@ namespace LSBASI3
 
         public TypedValue Evaluate(BooleanNode node)
         {
-            if (node.Token.Type == TokenType.True)
-            {
-                return BooleanSymbol.True;
-            }
-
-            if (node.Token.Type == TokenType.False)
-            {
-                return BooleanSymbol.False;
-            }
-
-            throw new Exception("Boolean must be true or false");
+            return node.Metadata.Value;
         }
 
         public TypedValue Evaluate(ComparisonOperationNode node)

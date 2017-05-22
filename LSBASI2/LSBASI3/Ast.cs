@@ -11,6 +11,7 @@ namespace LSBASI3
     {
         public TypeSymbol Type { get; set; }
         public Symbol Reference { get; set; }
+        public TypedValue Value { get; set; }
     }
 
     public abstract class AstNode
