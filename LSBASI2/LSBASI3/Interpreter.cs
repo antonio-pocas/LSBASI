@@ -89,6 +89,8 @@ namespace LSBASI3
             var result = node.Result.Yield(this);
 
             //TODO use information from static analysis here, try to figure out if we can get rid of AddAtDepth or LookupInfo
+            // maybe use the symbol as the stack frame key, that way we can just add the symbol during semantic analysis
+            // and use that instead. That way there's no need for AddAtDepth
             var variableInfo = currentScope.LookupInfo<TypedSymbol>(name);
 
             var variable = variableInfo.Symbol;

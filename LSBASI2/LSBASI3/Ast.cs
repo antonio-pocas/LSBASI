@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace LSBASI3
 {
+    // TODO new AST to be built by SemanticAnalyzer should have the metadata baked in
     public class NodeMetadata
     {
         public TypeSymbol Type { get; set; }

@@ -1,36 +1,59 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace LSBASI3
 {
     public class ScopedAnalysisTable
     {
         public ScopedAnalysisTable EnclosingScope { get; set; }
-        private readonly Dictionary<string, SymbolInfo> symbolInformation;
+        private readonly Dictionary<Symbol, SymbolInfo> symbolInformation;
 
-        public SymbolInfo this[string name]
+        public SymbolInfo this[Symbol symbol]
         {
             get
             {
                 SymbolInfo value;
-                if (!symbolInformation.TryGetValue(name, out value) && EnclosingScope != null)
+                if (!symbolInformation.TryGetValue(symbol, out value) && EnclosingScope != null)
                 {
-                    value = EnclosingScope[name];
+                    value = EnclosingScope[symbol];
                 }
                 return value;
             }
-
-            set { symbolInformation[name] = value; }
         }
 
-        public ScopedAnalysisTable(ScopedAnalysisTable enclosingScope)
+        public ScopedAnalysisTable(ScopedAnalysisTable enclosingScope, ScopedSymbolTable symbolScope)
         {
             EnclosingScope = enclosingScope;
-            symbolInformation = new Dictionary<string, SymbolInfo>();
+            symbolInformation = new Dictionary<Symbol, SymbolInfo>();
+            foreach (var symbol in symbolScope.GetLocalSymbols().OfType<VarSymbol>())
+            {
+                symbolInformation.Add(symbol, new SymbolInfo()
+                {
+                    Depth = symbolScope.Level,
+                    HasValueInBranches = new HashSet<AnalysisBranch>(),
+                    HasValue = false,
+                    Type = SymbolType.Variable,
+                    Scope = symbolScope,
+                    Symbol = symbol
+                });
+            }
         }
 
-        public bool Exists(string name)
+        public void Update(Symbol symbol, AnalysisBranch branch)
         {
-            return symbolInformation.ContainsKey(name);
+            var symbolInfo = this[symbol];
+            symbolInfo.HasValueInBranches.Add(branch);
+        }
+
+        public List<SymbolInfo> GetSymbolInfos()
+        {
+            var symbolInfos = symbolInformation.Values.ToList();
+            if (EnclosingScope != null)
+            {
+                symbolInfos.AddRange(EnclosingScope.GetSymbolInfos());
+            }
+
+            return symbolInfos;
         }
     }
 
@@ -39,6 +62,7 @@ namespace LSBASI3
         public Symbol Symbol { get; set; }
         public SymbolType Type { get; set; }
         public bool HasValue { get; set; }
+        public HashSet<AnalysisBranch> HasValueInBranches { get; set; }
 
         //public bool IsEvaluated { get; set; }
         public int Depth { get; set; }

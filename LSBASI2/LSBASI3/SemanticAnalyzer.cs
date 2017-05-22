@@ -6,6 +6,7 @@ using System.Linq;
 
 namespace LSBASI3
 {
+    //TODO make SemanticAnalyzer build a simplified AST
     public class SemanticAnalyzer : IVisitor, IEvaluator<TypeSymbol>
     {
         private ScopedSymbolTable currentScope;

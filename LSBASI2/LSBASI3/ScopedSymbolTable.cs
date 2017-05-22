@@ -51,6 +51,11 @@ namespace LSBASI3
             };
         }
 
+        public List<Symbol> GetLocalSymbols()
+        {
+            return table.Values.ToList();
+        }
+
         public void Define(Symbol symbol)
         {
             table[symbol.Name] = symbol;

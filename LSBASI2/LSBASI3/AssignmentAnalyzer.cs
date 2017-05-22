@@ -1,23 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LSBASI3
 {
-    // TODO fix this for branching
+    public class AnalysisBranch
+    {
+        public AnalysisBranch()
+        {
+        }
+    }
+
     public class AssignmentAnalyzer : IVisitor
     {
         private ScopedSymbolTable currentScope;
         private ScopedAnalysisTable currentAnalysisScope;
+        private AnalysisBranch currentAnalysisBranch;
         public List<string> Warnings { get; private set; }
 
         public AssignmentAnalyzer()
         {
-            currentAnalysisScope = new ScopedAnalysisTable(null);
             Warnings = new List<string>();
         }
 
         public List<string> Analyze(ProgramNode program, ScopedSymbolTable globalScope)
         {
+            currentAnalysisScope = new ScopedAnalysisTable(null, globalScope);
+            currentAnalysisBranch = new AnalysisBranch();
+            Warnings = new List<string>();
+
             currentScope = globalScope;
             program.Accept(this);
 
@@ -27,10 +38,12 @@ namespace LSBASI3
         public void Visit(ProgramNode node)
         {
             currentScope = currentScope.Lookup<ProgramSymbol>(node.Name).Scope;
+            currentAnalysisScope = new ScopedAnalysisTable(currentAnalysisScope, currentScope);
 
             node.Block.Accept(this);
 
             currentScope = currentScope.EnclosingScope;
+            currentAnalysisScope = currentAnalysisScope.EnclosingScope;
         }
 
         public void Visit(BlockNode node)
@@ -52,29 +65,19 @@ namespace LSBASI3
 
         public void Visit(AssignmentNode node)
         {
-            var name = node.Variable.Name;
-
             node.Result.Accept(this);
 
-            var symbol = currentScope.Lookup(name);
-            currentAnalysisScope[name] = new SymbolInfo()
-            {
-                Depth = currentScope.Level,
-                HasValue = true,
-                Type = SymbolType.Variable,
-                Scope = currentScope,
-                Symbol = symbol,
-            };
+            var symbol = node.Variable.Metadata.Reference as VarSymbol;
+            currentAnalysisScope.Update(symbol, currentAnalysisBranch);
         }
 
         public void Visit(VariableNode variableNode)
         {
-            var name = variableNode.Name;
-            var symbolInfo = currentAnalysisScope[name];
-            if (symbolInfo == null || !symbolInfo.HasValue)
+            var variable = variableNode.Metadata.Reference as VarSymbol;
+            var symbolInfo = currentAnalysisScope[variable];
+            if (!symbolInfo.HasValueInBranches.Contains(currentAnalysisBranch))
             {
-                var symbol = currentScope.Lookup(name);
-                Warnings.Add($"Use of unassigned variable {symbol}");
+                Warnings.Add($"Possible use of unassigned variable {variable}. Assigned to in {symbolInfo.HasValueInBranches.Count} branches");
             }
         }
 
@@ -97,24 +100,16 @@ namespace LSBASI3
         {
             var myScope = currentScope;
             var myAnalysisScope = currentAnalysisScope;
-            var procedure = currentScope.Lookup<ProcedureSymbol>(node.Name);
+            var procedure = node.Metadata.Reference as ProcedureSymbol;
 
-            currentAnalysisScope = new ScopedAnalysisTable(currentAnalysisScope);
             currentScope = procedure.Scope;
+            currentAnalysisScope = new ScopedAnalysisTable(currentAnalysisScope, currentScope);
 
             var parameters = procedure.Parameters;
 
-            for (int i = 0; i < parameters.Count; i++)
+            foreach (var parameter in parameters)
             {
-                var parameter = parameters[i];
-                currentAnalysisScope[parameter.Name] = new SymbolInfo()
-                {
-                    Depth = currentScope.Level,
-                    HasValue = true,
-                    Type = SymbolType.Variable,
-                    Symbol = parameter,
-                    Scope = currentScope
-                };
+                currentAnalysisScope.Update(parameter, currentAnalysisBranch);
             }
 
             procedure.Reference.Block.Compound.Accept(this);
@@ -136,31 +131,45 @@ namespace LSBASI3
         public void Visit(IfNode node)
         {
             node.Condition.Accept(this);
+
+            var myAnalysisBranch = currentAnalysisBranch;
+            // Branch
+            var thenBranch = new AnalysisBranch();
+            currentAnalysisBranch = thenBranch;
             node.Then.Accept(this);
-            node.Else?.Accept(this);
+            currentAnalysisBranch = myAnalysisBranch;
+
+            if (node.Else != null)
+            {
+                var elseBranch = new AnalysisBranch();
+                currentAnalysisBranch = elseBranch;
+                node.Else.Accept(this);
+                currentAnalysisBranch = myAnalysisBranch;
+                var assignedVariables = currentAnalysisScope.GetSymbolInfos()
+                    .Where(x => !x.HasValueInBranches.Contains(myAnalysisBranch)
+                                && x.HasValueInBranches.Contains(thenBranch)
+                                && x.HasValueInBranches.Contains(elseBranch));
+                foreach (var variable in assignedVariables)
+                {
+                    currentAnalysisScope.Update(variable.Symbol, currentAnalysisBranch);
+                }
+            }
         }
 
         public void Visit(FunctionCallNode node)
         {
             var myScope = currentScope;
             var myAnalysisScope = currentAnalysisScope;
-            var function = currentScope.Lookup<FunctionSymbol>(node.Name);
+            var function = node.Metadata.Reference as FunctionSymbol;
 
-            currentAnalysisScope = new ScopedAnalysisTable(currentAnalysisScope);
             currentScope = function.Scope;
+            currentAnalysisScope = new ScopedAnalysisTable(currentAnalysisScope, currentScope);
 
             var parameters = function.Parameters;
 
             foreach (var parameter in parameters)
             {
-                currentAnalysisScope[parameter.Name] = new SymbolInfo()
-                {
-                    Depth = currentScope.Level,
-                    HasValue = true,
-                    Type = SymbolType.Variable,
-                    Symbol = parameter,
-                    Scope = currentScope
-                };
+                currentAnalysisScope.Update(parameter, currentAnalysisBranch);
             }
 
             function.Reference.Block.Compound.Accept(this);

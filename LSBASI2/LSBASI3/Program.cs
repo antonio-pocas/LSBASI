@@ -12,7 +12,7 @@ namespace LSBASI3
         {
             //var x = Console.ReadLine();
             var x = @"program Main;
-   var x, y, tempum, tempdois : real;
+   var x, y, tempum, tempdois, newtestvar : real;
    var aaa, bbb, testeste : integer;
    var abcdef, bool : boolean;
 
@@ -48,11 +48,15 @@ abcdef := 4 * 40 + 2 / 3 > 5;
 if (4 > 3) then
   begin
     abcdef := false;
-    y := 6;
   end;
 else
+  begin
     abcdef := true;
+    newtestvar := 6.7;
+  end;
 bbb := 1;
+
+newtestvar := newtestvar + 1;
 end.  { Main }";
 
             var lexer = new Lexer(x);
