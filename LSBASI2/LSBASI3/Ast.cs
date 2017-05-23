@@ -2,32 +2,22 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace LSBASI3
 {
-    // TODO new AST to be built by SemanticAnalyzer should have the metadata baked in
-    public class NodeMetadata
-    {
-        public TypeSymbol Type { get; set; }
-        public Symbol Reference { get; set; }
-        public TypedValue Value { get; set; }
-    }
-
     public abstract class AstNode
     {
         public readonly Token Token;
-        public NodeMetadata Metadata { get; set; }
 
         public AstNode()
         {
-            Metadata = new NodeMetadata();
         }
 
         public AstNode(Token token)
         {
-            Metadata = new NodeMetadata();
             this.Token = token;
         }
 
@@ -172,6 +162,7 @@ namespace LSBASI3
     {
         public string Name { get; set; }
         public List<AstNode> Arguments { get; set; }
+        public ProcedureSymbol Procedure { get; set; }
 
         public ProcedureCallNode(string name, List<AstNode> arguments)
         {
@@ -291,6 +282,7 @@ namespace LSBASI3
     public class VariableNode : AstNode
     {
         public string Name { get; set; }
+        public VarSymbol Symbol { get; set; }
 
         public VariableNode(Token token) : base(token)
         {
@@ -311,6 +303,7 @@ namespace LSBASI3
     public class FunctionCallNode : ProcedureCallNode
     {
         public Type Type { get; set; }
+        public FunctionSymbol Function { get; set; }
 
         public FunctionCallNode(string name, List<AstNode> arguments) : base(name, arguments)
         {
@@ -332,6 +325,7 @@ namespace LSBASI3
         public AstNode Left { get; set; }
         public AstNode Right { get; set; }
         public BinaryOperationType Type { get; set; }
+        public Func<TypedValue, TypedValue, TypedValue> Operation { get; set; }
 
         public BinaryOperationNode(Token token, AstNode left, AstNode right) : base(token)
         {
@@ -377,6 +371,7 @@ namespace LSBASI3
         public AstNode Left { get; set; }
         public AstNode Right { get; set; }
         public ComparisonOperationType Type { get; set; }
+        public Func<TypedValue, TypedValue, TypedValue> Operation { get; set; }
 
         public ComparisonOperationNode(Token token, AstNode left, AstNode right) : base(token)
         {
@@ -425,6 +420,7 @@ namespace LSBASI3
     {
         public AstNode Child { get; set; }
         public UnaryOperationType Type { get; set; }
+        public Func<TypedValue, TypedValue> Operation { get; set; }
 
         public UnaryOperationNode(Token token, AstNode child) : base(token)
         {
@@ -455,6 +451,7 @@ namespace LSBASI3
     public class NumberNode : AstNode
     {
         public string Value { get; set; }
+        public TypedValue TypedValue { get; set; }
 
         public NumberNode(Token token) : base(token)
         {
@@ -475,6 +472,7 @@ namespace LSBASI3
     public class BooleanNode : AstNode
     {
         public bool Value { get; set; }
+        public TypedValue TypedValue { get; set; }
 
         public BooleanNode(Token token, bool value) : base(token)
         {

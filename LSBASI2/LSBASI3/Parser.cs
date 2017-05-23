@@ -35,8 +35,8 @@ namespace LSBASI3
     ///                           | LPAREN Expr RPAREN
     ///                           | Variable
     ///                           | Function
+    /// Function:                   Variable (LPAREN (Expr)+ RPAREN)?
     /// Variable:                   ID
-    /// Function:                   ID (LPAREN (Expr)+ RPAREN)?
     /// </summary>
     public class Parser
     {

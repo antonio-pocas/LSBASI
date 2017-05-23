@@ -67,13 +67,13 @@ namespace LSBASI3
         {
             node.Result.Accept(this);
 
-            var symbol = node.Variable.Metadata.Reference as VarSymbol;
+            var symbol = node.Variable.Symbol;
             currentAnalysisScope.Update(symbol, currentAnalysisBranch);
         }
 
         public void Visit(VariableNode variableNode)
         {
-            var variable = variableNode.Metadata.Reference as VarSymbol;
+            var variable = variableNode.Symbol;
             var symbolInfo = currentAnalysisScope[variable];
             if (!symbolInfo.HasValueInBranches.Contains(currentAnalysisBranch))
             {
@@ -100,7 +100,7 @@ namespace LSBASI3
         {
             var myScope = currentScope;
             var myAnalysisScope = currentAnalysisScope;
-            var procedure = node.Metadata.Reference as ProcedureSymbol;
+            var procedure = node.Procedure;
 
             currentScope = procedure.Scope;
             currentAnalysisScope = new ScopedAnalysisTable(currentAnalysisScope, currentScope);
@@ -133,9 +133,10 @@ namespace LSBASI3
             node.Condition.Accept(this);
 
             var myAnalysisBranch = currentAnalysisBranch;
-            // Branch
+
             var thenBranch = new AnalysisBranch();
             currentAnalysisBranch = thenBranch;
+
             node.Then.Accept(this);
             currentAnalysisBranch = myAnalysisBranch;
 
@@ -143,12 +144,15 @@ namespace LSBASI3
             {
                 var elseBranch = new AnalysisBranch();
                 currentAnalysisBranch = elseBranch;
+
                 node.Else.Accept(this);
                 currentAnalysisBranch = myAnalysisBranch;
+
                 var assignedVariables = currentAnalysisScope.GetSymbolInfos()
                     .Where(x => !x.HasValueInBranches.Contains(myAnalysisBranch)
                                 && x.HasValueInBranches.Contains(thenBranch)
                                 && x.HasValueInBranches.Contains(elseBranch));
+
                 foreach (var variable in assignedVariables)
                 {
                     currentAnalysisScope.Update(variable.Symbol, currentAnalysisBranch);
@@ -160,7 +164,7 @@ namespace LSBASI3
         {
             var myScope = currentScope;
             var myAnalysisScope = currentAnalysisScope;
-            var function = node.Metadata.Reference as FunctionSymbol;
+            var function = node.Function;
 
             currentScope = function.Scope;
             currentAnalysisScope = new ScopedAnalysisTable(currentAnalysisScope, currentScope);

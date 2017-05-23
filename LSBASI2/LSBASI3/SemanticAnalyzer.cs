@@ -6,7 +6,6 @@ using System.Linq;
 
 namespace LSBASI3
 {
-    //TODO make SemanticAnalyzer build a simplified AST
     //TODO convert exceptions into error messages
     public class SemanticAnalyzer : IVisitor, IEvaluator<TypeSymbol>
     {
@@ -101,7 +100,7 @@ namespace LSBASI3
                 }
             }
 
-            node.Metadata.Reference = function;
+            node.Function = function;
         }
 
         public TypeSymbol Evaluate(FunctionNode node)
@@ -135,7 +134,7 @@ namespace LSBASI3
                 }
             }
 
-            node.Metadata.Reference = function;
+            node.Function = function;
             return function.Type;
         }
 
@@ -169,7 +168,7 @@ namespace LSBASI3
                 }
             }
 
-            node.Metadata.Reference = procedure;
+            node.Procedure = procedure;
         }
 
         public void Visit(BooleanNode node)
@@ -200,13 +199,13 @@ namespace LSBASI3
         {
             if (node.Token.Type == TokenType.True)
             {
-                node.Metadata.Value = BooleanSymbol.True;
+                node.TypedValue = BooleanSymbol.True;
                 return BuiltinType.Boolean;
             }
 
             if (node.Token.Type == TokenType.False)
             {
-                node.Metadata.Value = BooleanSymbol.False;
+                node.TypedValue = BooleanSymbol.False;
                 return BuiltinType.Boolean;
             }
 
@@ -224,14 +223,55 @@ namespace LSBASI3
                     $"Cannot perform comparison {node.Type.ToString()} between types {left} and {right}");
             }
 
+            switch (node.Type)
+            {
+                case ComparisonOperationType.Equals:
+                    node.Operation = left.Equals;
+                    return BuiltinType.Boolean;
+
+                case ComparisonOperationType.Differs:
+                    node.Operation = left.Differs;
+                    return BuiltinType.Boolean;
+            }
+
+            NumberTypeSymbol actualType;
+            if (left is RealSymbol || right is RealSymbol)
+            {
+                actualType = BuiltinType.Real;
+            }
+            else
+            {
+                actualType = BuiltinType.Integer;
+            }
+
+            switch (node.Type)
+            {
+                case ComparisonOperationType.GreaterThan:
+                    node.Operation = actualType.GreaterThan;
+                    break;
+
+                case ComparisonOperationType.GreaterThanOrEqual:
+                    node.Operation = actualType.GreaterThanOrEqual;
+                    break;
+
+                case ComparisonOperationType.LessThan:
+                    node.Operation = actualType.LessThan;
+                    break;
+
+                case ComparisonOperationType.LessThanOrEqual:
+                    node.Operation = actualType.LessThanOrEqual;
+                    break;
+            }
+
             return BuiltinType.Boolean;
         }
 
         public void Visit(CompoundNode node)
         {
-            foreach (var child in node.Children)
+            for (var i = 0; i < node.Children.Count; i++)
             {
-                child.Accept(this);
+                node.Children[i] = FixValueDiscardingFunctionCalls(node.Children[i]);
+                node.Children[i].Accept(this);
             }
         }
 
@@ -251,7 +291,7 @@ namespace LSBASI3
                 throw new Exception($"Use of undeclared variable {name}");
             }
 
-            variableNode.Metadata.Reference = variable;
+            variableNode.Symbol = variable;
         }
 
         public void Visit(NoOpNode node)
@@ -261,7 +301,7 @@ namespace LSBASI3
         public void Visit(AssignmentNode node)
         {
             node.Variable.Accept(this);
-            var variable = node.Variable.Metadata.Reference as VarSymbol;
+            var variable = node.Variable.Symbol;
 
             node.Result = FixParenlessFunctionCalls(node.Result);
 
@@ -278,13 +318,13 @@ namespace LSBASI3
         {
             if (node.Token.Type == TokenType.IntegerConstant)
             {
-                node.Metadata.Value = new TypedValue(BuiltinType.Integer, int.Parse(node.Value));
+                node.TypedValue = new TypedValue(BuiltinType.Integer, int.Parse(node.Value));
                 return BuiltinType.Integer;
             }
 
             if (node.Token.Type == TokenType.RealConstant)
             {
-                node.Metadata.Value = new TypedValue(BuiltinType.Real, double.Parse(node.Value, CultureInfo.InvariantCulture));
+                node.TypedValue = new TypedValue(BuiltinType.Real, double.Parse(node.Value, CultureInfo.InvariantCulture));
                 return BuiltinType.Real;
             }
 
@@ -294,13 +334,20 @@ namespace LSBASI3
         public TypeSymbol Evaluate(VariableNode node)
         {
             var name = node.Name;
-            var variable = currentScope.Lookup<TypedSymbol>(name);
+            var symbol = currentScope.Lookup(name);
+
+            var variable = symbol as VarSymbol;
+
             if (variable == null)
             {
-                throw new TypeAccessException($"Use of undeclared variable or function {name}");
+                if (symbol != null)
+                {
+                    throw new Exception($"{symbol} is not a variable");
+                }
+                throw new Exception($"Use of undeclared variable {name}");
             }
 
-            node.Metadata.Reference = variable;
+            node.Symbol = variable;
 
             return variable.Type;
         }
@@ -312,7 +359,17 @@ namespace LSBASI3
 
             var resultType = TypeChecker.CheckUnaryOperation(type);
 
-            node.Metadata.Type = resultType;
+            switch (node.Type)
+            {
+                case UnaryOperationType.Plus:
+                    node.Operation = resultType.Plus;
+                    break;
+
+                case UnaryOperationType.Minus:
+                    node.Operation = resultType.Minus;
+                    break;
+            }
+
             return resultType;
         }
 
@@ -325,9 +382,43 @@ namespace LSBASI3
             var rightType = node.Right.Yield(this);
 
             var resultType = TypeChecker.CheckBinaryOperation(node.Type, leftType, rightType);
-            node.Metadata.Type = resultType;
+
+            switch (node.Type)
+            {
+                case BinaryOperationType.Add:
+                    node.Operation = resultType.Add;
+                    break;
+
+                case BinaryOperationType.Subtract:
+                    node.Operation = resultType.Subtract;
+                    break;
+
+                case BinaryOperationType.Multiply:
+                    node.Operation = resultType.Multiply;
+                    break;
+
+                case BinaryOperationType.IntegerDivision:
+                case BinaryOperationType.RealDivision:
+                    node.Operation = resultType.Divide;
+                    break;
+            }
 
             return resultType;
+        }
+
+        private AstNode FixValueDiscardingFunctionCalls(AstNode node)
+        {
+            var procedureCall = node as ProcedureCallNode;
+            if (procedureCall != null)
+            {
+                var functionSymbol = currentScope.Lookup<FunctionSymbol>(procedureCall.Name);
+                if (functionSymbol != null)
+                {
+                    return new FunctionCallNode(procedureCall.Name, procedureCall.Arguments);
+                }
+            }
+
+            return node;
         }
 
         private AstNode FixParenlessFunctionCalls(AstNode node)

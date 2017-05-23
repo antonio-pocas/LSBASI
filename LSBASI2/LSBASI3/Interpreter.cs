@@ -114,7 +114,7 @@ namespace LSBASI3
         public void Visit(FunctionCallNode node)
         {
             var name = node.Name;
-            var function = node.Metadata.Reference as FunctionSymbol;
+            var function = node.Function;
             var parameters = function.Parameters;
             var arguments = node.Arguments;
 
@@ -139,7 +139,7 @@ namespace LSBASI3
         public void Visit(ProcedureCallNode node)
         {
             var name = node.Name;
-            var procedure = node.Metadata.Reference as ProcedureSymbol;
+            var procedure = node.Procedure;
             var parameters = procedure.Parameters;
             var arguments = node.Arguments;
 
@@ -161,16 +161,6 @@ namespace LSBASI3
             currentStackFrame = procedureMemory.PreviousFrame;
         }
 
-        public void Visit(BooleanNode node)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Visit(ComparisonOperationNode node)
-        {
-            throw new NotImplementedException();
-        }
-
         public void Visit(IfNode node)
         {
             var conditionValue = node.Condition.Yield(this);
@@ -187,7 +177,7 @@ namespace LSBASI3
 
         public TypedValue Evaluate(NumberNode node)
         {
-            return node.Metadata.Value;
+            return node.TypedValue;
         }
 
         public TypedValue Evaluate(VariableNode node)
@@ -206,60 +196,21 @@ namespace LSBASI3
         public TypedValue Evaluate(UnaryOperationNode node)
         {
             var value = node.Child.Yield(this);
-
-            var type = value.Type as NumberTypeSymbol;
-
-            switch (node.Type)
-            {
-                case UnaryOperationType.Plus:
-                    return type.Plus(value);
-
-                case UnaryOperationType.Minus:
-                    return type.Minus(value);
-            }
-
-            throw new Exception();
+            return node.Operation(value);
         }
 
         public TypedValue Evaluate(BinaryOperationNode node)
         {
-            var leftValue = node.Left.Yield(this);
-            var rightValue = node.Right.Yield(this);
+            var left = node.Left.Yield(this);
+            var right = node.Right.Yield(this);
 
-            var numberType = node.Metadata.Type as NumberTypeSymbol;
-
-            switch (node.Type)
-            {
-                case BinaryOperationType.Add:
-                    return numberType.Add(leftValue, rightValue);
-
-                case BinaryOperationType.Subtract:
-                    return numberType.Subtract(leftValue, rightValue);
-
-                case BinaryOperationType.Multiply:
-                    return numberType.Multiply(leftValue, rightValue);
-
-                case BinaryOperationType.IntegerDivision:
-                    return BuiltinType.Integer.Divide(leftValue, rightValue);
-
-                case BinaryOperationType.RealDivision:
-                    return BuiltinType.Real.Divide(leftValue, rightValue);
-            }
-
-            throw new Exception();
-        }
-
-        public TypedValue Evaluate(FunctionNode node)
-        {
-            //TODO
-
-            throw new NotImplementedException();
+            return node.Operation(left, right);
         }
 
         public TypedValue Evaluate(FunctionCallNode node)
         {
             var name = node.Name;
-            var function = node.Metadata.Reference as FunctionSymbol;
+            var function = node.Function;
             var parameters = function.Parameters;
             var arguments = node.Arguments;
 
@@ -287,7 +238,7 @@ namespace LSBASI3
 
         public TypedValue Evaluate(BooleanNode node)
         {
-            return node.Metadata.Value;
+            return node.TypedValue;
         }
 
         public TypedValue Evaluate(ComparisonOperationNode node)
@@ -295,45 +246,7 @@ namespace LSBASI3
             var left = node.Left.Yield(this);
             var right = node.Right.Yield(this);
 
-            if (node.Type == ComparisonOperationType.Equals)
-            {
-                return left.Type.Equals(left, right);
-            }
-
-            if (node.Type == ComparisonOperationType.Differs)
-            {
-                return left.Type.Differs(left, right);
-            }
-
-            var leftAsReal = left.Type as RealSymbol;
-            var rightAsReal = right.Type as RealSymbol;
-            NumberTypeSymbol finalType;
-            if (leftAsReal != null || (rightAsReal != null))
-            {
-                finalType = BuiltinType.Real;
-            }
-            else
-            {
-                finalType = BuiltinType.Integer;
-            }
-
-            switch (node.Type)
-            {
-                case ComparisonOperationType.GreaterThan:
-                    return finalType.GreaterThan(left, right);
-
-                case ComparisonOperationType.GreaterThanOrEqual:
-                    return finalType.GreaterThanOrEqual(left, right);
-
-                case ComparisonOperationType.LessThan:
-                    return finalType.LessThan(left, right);
-
-                case ComparisonOperationType.LessThanOrEqual:
-                    return finalType.LessThanOrEqual(left, right);
-
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            return node.Operation(left, right);
         }
 
 #if DEBUG
@@ -350,6 +263,21 @@ namespace LSBASI3
 #endif
 
         #region unused methods
+
+        public TypedValue Evaluate(FunctionNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(BooleanNode node)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Visit(ComparisonOperationNode node)
+        {
+            throw new NotImplementedException();
+        }
 
         public void Visit(ParameterNode node)
         {

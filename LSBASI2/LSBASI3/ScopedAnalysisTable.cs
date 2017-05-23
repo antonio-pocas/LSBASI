@@ -45,12 +45,12 @@ namespace LSBASI3
             symbolInfo.HasValueInBranches.Add(branch);
         }
 
-        public List<SymbolInfo> GetSymbolInfos()
+        public IEnumerable<SymbolInfo> GetSymbolInfos()
         {
-            var symbolInfos = symbolInformation.Values.ToList();
+            var symbolInfos = symbolInformation.Values;
             if (EnclosingScope != null)
             {
-                symbolInfos.AddRange(EnclosingScope.GetSymbolInfos());
+                return symbolInfos.Concat(EnclosingScope.GetSymbolInfos());
             }
 
             return symbolInfos;
