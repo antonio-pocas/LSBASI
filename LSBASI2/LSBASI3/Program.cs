@@ -53,6 +53,10 @@ else
   begin
     abcdef := true;
     newtestvar := 6.7;
+    if (5 > 3) then
+        bbb := 1;
+    else
+        newtestvar := newtestvar - bbb;
   end;
 bbb := 1;
 

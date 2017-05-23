@@ -7,6 +7,7 @@ using System.Linq;
 namespace LSBASI3
 {
     //TODO make SemanticAnalyzer build a simplified AST
+    //TODO convert exceptions into error messages
     public class SemanticAnalyzer : IVisitor, IEvaluator<TypeSymbol>
     {
         private ScopedSymbolTable currentScope;
