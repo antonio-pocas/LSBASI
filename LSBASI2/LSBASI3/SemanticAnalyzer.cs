@@ -409,31 +409,25 @@ namespace LSBASI3
         private AstNode FixValueDiscardingFunctionCalls(AstNode node)
         {
             var procedureCall = node as ProcedureCallNode;
-            if (procedureCall != null)
+            if (procedureCall == null)
             {
-                var functionSymbol = currentScope.Lookup<FunctionSymbol>(procedureCall.Name);
-                if (functionSymbol != null)
-                {
-                    return new FunctionCallNode(procedureCall.Name, procedureCall.Arguments);
-                }
+                return node;
             }
 
-            return node;
+            var functionSymbol = currentScope.Lookup<FunctionSymbol>(procedureCall.Name);
+            return functionSymbol != null ? new FunctionCallNode(procedureCall.Name, procedureCall.Arguments) : node;
         }
 
         private AstNode FixParenlessFunctionCalls(AstNode node)
         {
             var nodeAsVariable = node as VariableNode;
-            if (nodeAsVariable != null)
+            if (nodeAsVariable == null)
             {
-                var functionSymbol = currentScope.Lookup<TypedSymbol>(nodeAsVariable.Name) as FunctionSymbol;
-                if (functionSymbol != null)
-                {
-                    return new FunctionCallNode(nodeAsVariable.Name, new List<AstNode>());
-                }
+                return node;
             }
 
-            return node;
+            var functionSymbol = currentScope.Lookup<FunctionSymbol>(nodeAsVariable.Name);
+            return functionSymbol != null ? new FunctionCallNode(nodeAsVariable.Name, new List<AstNode>()) : node;
         }
 
         #region unused methods
